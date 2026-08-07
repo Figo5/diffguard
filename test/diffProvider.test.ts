@@ -1,10 +1,10 @@
 // test/diffProvider.test.ts
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { isGitRepo, getGitDiff, getSelectionText } from '../src/diffProvider.js';
+import { isGitRepo, getGitDiff, getSelectionText, getRepoFiles } from '../src/diffProvider.js';
 
 let dir: string;
 
@@ -59,5 +59,59 @@ describe('getSelectionText', () => {
   it('returns the selected text from the editor', () => {
     const editor = { document: { getText: (r: unknown) => (r === 'sel' ? 'selected code' : '') }, selection: 'sel' };
     expect(getSelectionText(editor as never)).toBe('selected code');
+  });
+});
+
+describe('getGitDiff paths', () => {
+  it('filters the diff to the given paths', async () => {
+    writeFileSync(join(dir, 'a.ts'), 'const x = 4;\n');
+    writeFileSync(join(dir, 'b.ts'), 'const b = 9;\n');
+    execFileSync('git', ['add', 'b.ts'], { cwd: dir });
+    writeFileSync(join(dir, 'b.ts'), 'const b = 10;\n');
+    const all = await getGitDiff(dir);
+    expect(all).toContain('a.ts');
+    expect(all).toContain('b.ts');
+    const onlyA = await getGitDiff(dir, { paths: ['a.ts'] });
+    expect(onlyA).toContain('a.ts');
+    expect(onlyA).not.toContain('b.ts');
+  });
+});
+
+describe('getRepoFiles', () => {
+  let repo: string;
+  beforeAll(() => {
+    repo = mkdtempSync(join(tmpdir(), 'diffguard-repo-'));
+    execFileSync('git', ['init', '-q'], { cwd: repo });
+    writeFileSync(join(repo, 'a.ts'), 'const a = 1;\n');
+    writeFileSync(join(repo, 'b.ts'), 'const b = 2;\n');
+    writeFileSync(join(repo, '.gitignore'), 'ignored.txt\n');
+    writeFileSync(join(repo, 'ignored.txt'), 'secret\n');
+    mkdirSync(join(repo, 'node_modules'));
+    writeFileSync(join(repo, 'node_modules', 'dep.js'), 'module.exports = 1;\n');
+    writeFileSync(join(repo, 'blob.bin'), Buffer.from([0, 1, 2, 0, 3]));
+    execFileSync('git', ['add', '.'], { cwd: repo });
+    execFileSync('git', ['commit', '-q', '-m', 'init'], { cwd: repo });
+    writeFileSync(join(repo, 'untracked.ts'), 'const u = 1;\n');
+  });
+  afterAll(() => {
+    rmSync(repo, { recursive: true, force: true });
+  });
+
+  it('includes tracked + untracked non-ignored files, skipping node_modules and binaries', async () => {
+    const r = await getRepoFiles(repo, { maxChars: 100000 });
+    expect(r.files).toContain('=== a.ts ===');
+    expect(r.files).toContain('=== b.ts ===');
+    expect(r.files).toContain('=== untracked.ts ===');
+    expect(r.files).not.toContain('=== ignored.txt ===');
+    expect(r.files).not.toContain('node_modules');
+    expect(r.files).not.toContain('=== blob.bin ===');
+    expect(r.fileCount).toBe(4); // a.ts, b.ts, .gitignore, untracked.ts
+    expect(r.truncated).toBe(false);
+  });
+
+  it('caps total size and flags truncation', async () => {
+    const r = await getRepoFiles(repo, { maxChars: 20 });
+    expect(r.truncated).toBe(true);
+    expect(r.fileCount).toBe(1); // only the first file fits
   });
 });
