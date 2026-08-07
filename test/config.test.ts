@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { loadConfig, getApiKey, SEVERITIES } from '../cli/config.js';
+import { loadConfig, resolveCliKey, SEVERITIES } from '../cli/config.js';
 import type { Severity } from '../src/findingsModel.js';
 
 describe('loadConfig', () => {
@@ -56,16 +56,23 @@ describe('loadConfig provider', () => {
   it('leaves baseUrl unset by default', () => {
     expect(loadConfig({} as NodeJS.ProcessEnv).baseUrl).toBeUndefined();
   });
+  it('reads provider, model, and baseUrl from a config file', () => {
+    const c = loadConfig({} as NodeJS.ProcessEnv, { provider: 'openai', model: 'gemma4:e2b', baseUrl: 'http://localhost:11434/v1' });
+    expect(c).toMatchObject({ provider: 'openai', model: 'gemma4:e2b', baseUrl: 'http://localhost:11434/v1' });
+  });
 });
 
-describe('getApiKey', () => {
-  it('returns the trimmed key', () => {
-    expect(getApiKey({ ANTHROPIC_API_KEY: '  sk-ant-123  ' } as NodeJS.ProcessEnv)).toBe('sk-ant-123');
+describe('resolveCliKey', () => {
+  it('returns the trimmed env key', async () => {
+    expect(await resolveCliKey({ ANTHROPIC_API_KEY: '  sk-ant-123  ' } as NodeJS.ProcessEnv)).toBe('sk-ant-123');
   });
-  it('returns null when unset', () => {
-    expect(getApiKey({} as NodeJS.ProcessEnv)).toBeNull();
+  it('falls back to the keychain when env is unset', async () => {
+    expect(await resolveCliKey({} as NodeJS.ProcessEnv, async () => 'sk-keychain')).toBe('sk-keychain');
   });
-  it('returns null for a blank value', () => {
-    expect(getApiKey({ ANTHROPIC_API_KEY: '   ' } as NodeJS.ProcessEnv)).toBeNull();
+  it('falls back to the keychain for a blank env value', async () => {
+    expect(await resolveCliKey({ ANTHROPIC_API_KEY: '   ' } as NodeJS.ProcessEnv, async () => 'sk-keychain')).toBe('sk-keychain');
+  });
+  it('returns null when neither env nor keychain has a key', async () => {
+    expect(await resolveCliKey({} as NodeJS.ProcessEnv, async () => null)).toBeNull();
   });
 });

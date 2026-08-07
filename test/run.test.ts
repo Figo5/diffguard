@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { run, type RunDeps } from '../cli/run.js';
+import { run, friendlyError, type RunDeps } from '../cli/run.js';
 import type { Finding } from '../src/findingsModel.js';
 
 const FINDING: Finding = { category: 'security', severity: 'high', file: 'a.ts', line: 1, message: 'Bad', suggestedFix: undefined };
@@ -8,6 +8,8 @@ function deps(over: Partial<RunDeps> = {}): RunDeps {
   return {
     getApiKey: () => 'sk-test',
     getSettings: () => ({ model: 'm', severityThreshold: 'medium', securityEnabled: true, behaviorEnabled: true, maxDiffTokens: 8000, provider: 'anthropic' }),
+    readConfigFile: async () => null,
+    configFilePath: () => '/tmp/diffguard-config.json',
     isGitRepo: async () => true,
     getGitDiff: async () => 'diff --git a/a.ts b/a.ts',
     detectRepoContext: () => '',
@@ -64,5 +66,25 @@ describe('run', () => {
     const audit = vi.fn(async () => ({ findings: [], dropped: 0, truncated: false, error: null }));
     await run({ staged: false, json: false }, deps({ createEngine: () => ({ audit }) as never }));
     expect(audit.mock.calls[0][1]).toBeInstanceOf(AbortSignal);
+  });
+  it('returns 2 when the config file is unreadable', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const d = deps({ readConfigFile: async () => { throw new Error('bad json'); } });
+    expect(await run({ staged: false, json: false }, d)).toBe(2);
+    expect(err).toHaveBeenCalledWith(expect.stringContaining('bad json'));
+    err.mockRestore();
+  });
+  it('skips the key requirement when the config says needsKey:false', async () => {
+    const d = deps({ readConfigFile: async () => ({ needsKey: false }), getApiKey: async () => null });
+    expect(await run({ staged: false, json: false }, d)).toBe(1);
+  });
+  it('friendlyError appends a config hint for model errors', () => {
+    expect(friendlyError('model "x" not found')).toContain('diffguard config');
+  });
+  it('friendlyError appends a hint for 401 errors', () => {
+    expect(friendlyError('401 Unauthorized')).toContain('diffguard config');
+  });
+  it('friendlyError passes through unrelated messages', () => {
+    expect(friendlyError('boom')).toBe('boom');
   });
 });

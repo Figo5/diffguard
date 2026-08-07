@@ -1,15 +1,18 @@
 import { detectRepoContext } from '../src/auditEngine/repoContext.js';
 import { isGitRepo, getGitDiff } from '../src/diffProvider.js';
 import { createEngine } from '../src/auditEngine/engineFactory.js';
-import { getApiKey, loadConfig, type CliOptions } from './config.js';
+import { resolveCliKey, loadConfig, type CliOptions } from './config.js';
+import { readConfigFile, configFilePath, type ConfigFile } from '../src/config/configFile.js';
 import { renderHuman, renderJson } from './render.js';
 import type { DiffGuardSettings } from '../src/types.js';
 import type { Finding } from '../src/findingsModel.js';
 import type { AuditResult } from '../src/auditEngine/auditEngine.js';
 
 export interface RunDeps {
-  getApiKey: (env: NodeJS.ProcessEnv) => string | null;
-  getSettings: (env: NodeJS.ProcessEnv) => DiffGuardSettings;
+  getApiKey: (env: NodeJS.ProcessEnv) => Promise<string | null>;
+  getSettings: (env: NodeJS.ProcessEnv, file?: ConfigFile | null) => DiffGuardSettings;
+  readConfigFile: (path: string) => Promise<ConfigFile | null>;
+  configFilePath: (env: NodeJS.ProcessEnv) => string;
   isGitRepo: (cwd: string) => Promise<boolean>;
   getGitDiff: (cwd: string, opts?: { staged?: boolean }) => Promise<string>;
   detectRepoContext: (diff: string) => string;
@@ -18,8 +21,10 @@ export interface RunDeps {
 }
 
 export const realDeps: RunDeps = {
-  getApiKey,
+  getApiKey: resolveCliKey,
   getSettings: loadConfig,
+  readConfigFile,
+  configFilePath,
   isGitRepo,
   getGitDiff,
   detectRepoContext,
@@ -27,11 +32,33 @@ export const realDeps: RunDeps = {
   render: (findings, opts) => (opts.json ? renderJson(findings, { dropped: opts.dropped, truncated: opts.truncated, repoContext: opts.repoContext }) : renderHuman(findings, { threshold: opts.threshold, dropped: opts.dropped, truncated: opts.truncated, fileCount: opts.fileCount })),
 };
 
+export function friendlyError(message: string): string {
+  const m = message.toLowerCase();
+  if (/model/i.test(m) && /not found|does not exist|unknown model/i.test(m)) {
+    return `${message} — check the model with \`diffguard config\`.`;
+  }
+  if (/401|unauthorized|invalid api key|authentication/i.test(m)) {
+    return `${message} — check your API key with \`diffguard config\` or \`diffguard key set\`.`;
+  }
+  if (/econnrefused|fetch failed|connect|network/i.test(m)) {
+    return `${message} — could not reach the provider. Is it running? Check \`diffguard config\`.`;
+  }
+  return message;
+}
+
 export async function run(cli: CliOptions, deps: RunDeps = realDeps): Promise<number> {
-  const settings = deps.getSettings(process.env);
-  const apiKey = deps.getApiKey(process.env);
+  let file: ConfigFile | null = null;
+  try {
+    file = await deps.readConfigFile(deps.configFilePath(process.env));
+  } catch (err) {
+    console.error(`DiffGuard: could not read config — ${err instanceof Error ? err.message : String(err)}`);
+    return 2;
+  }
+  const settings = deps.getSettings(process.env, file);
+  const needsKey = file?.needsKey !== false;
+  const apiKey = needsKey ? await deps.getApiKey(process.env) : 'local';
   if (!apiKey) {
-    console.error('DiffGuard: ANTHROPIC_API_KEY is not set. Set it to audit changes.');
+    console.error('DiffGuard: no API key configured. Run `diffguard config` to set up a provider, or `diffguard key set` to store a key.');
     return 2;
   }
 
@@ -69,7 +96,7 @@ export async function run(cli: CliOptions, deps: RunDeps = realDeps): Promise<nu
     return 0;
   }
   if (result.error) {
-    console.error(`DiffGuard: audit failed — ${result.error}`);
+    console.error(`DiffGuard: audit failed — ${friendlyError(result.error)}`);
     return 2;
   }
 
