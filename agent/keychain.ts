@@ -39,11 +39,19 @@ export async function setKeyInKeychain(
   exec: ExecFileFn = execFileAsync
 ): Promise<void> {
   if (platform === 'darwin') {
-    await exec('security', ['add-generic-password', '-a', SERVICE, '-s', SERVICE, '-w', key, '-U']);
+    try {
+      await exec('security', ['add-generic-password', '-a', SERVICE, '-s', SERVICE, '-w', key, '-U']);
+    } catch {
+      throw new Error('Could not store the API key in the macOS keychain.');
+    }
     return;
   }
   if (platform === 'linux') {
-    await exec('secret-tool', ['store', '--label', 'DiffGuard API key', 'service', SERVICE, 'key', SERVICE], { input: key });
+    try {
+      await exec('secret-tool', ['store', '--label', 'DiffGuard API key', 'service', SERVICE, 'key', SERVICE], { input: key });
+    } catch {
+      throw new Error('Could not store the API key in the platform keychain.');
+    }
     return;
   }
   throw new Error('Keychain storage is not supported on this platform.');

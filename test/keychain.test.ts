@@ -31,4 +31,17 @@ describe('setKeyInKeychain', () => {
       expect.arrayContaining(['add-generic-password', '-a', 'diffguard', '-s', 'diffguard', '-w', 'sk-ant-123'])
     );
   });
+
+  it('sanitizes the error so the key never appears in the thrown error message', async () => {
+    const apiKey = 'sk-ant-sensitive-key-12345';
+    const execFile = vi.fn(async () => {
+      throw new Error(`Command failed: security add-generic-password -a diffguard -s diffguard -w ${apiKey} -U`);
+    });
+    await expect(setKeyInKeychain(apiKey, 'darwin', execFile as never)).rejects.toThrow();
+    try {
+      await setKeyInKeychain(apiKey, 'darwin', execFile as never);
+    } catch (err) {
+      expect(err instanceof Error ? err.message : String(err)).not.toContain(apiKey);
+    }
+  });
 });
