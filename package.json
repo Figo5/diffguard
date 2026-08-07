@@ -1,6 +1,6 @@
 {
   "name": "@figo5/diffguard",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Audit code changes for security issues and unintended behavior changes using your own Anthropic API key.",
   "license": "MIT",
   "repository": {
@@ -18,7 +18,10 @@
       "import": "./dist/src/index.js"
     }
   },
-  "files": ["dist", "bin"],
+  "files": [
+    "dist",
+    "bin"
+  ],
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc -p ./",
