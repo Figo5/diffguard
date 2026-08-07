@@ -43,6 +43,12 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  function resolveFindingUri(file: string): vscode.Uri | undefined {
+    const workspaceFolderUri = vscode.workspace.workspaceFolders?.[0]?.uri;
+    if (!workspaceFolderUri || !file) return undefined;
+    return vscode.Uri.joinPath(workspaceFolderUri, file);
+  }
+
   async function runAudit(source: 'git' | 'selection'): Promise<void> {
     const key = await getApiKey(context.secrets);
     if (!key) {
@@ -65,7 +71,18 @@ export function activate(context: vscode.ExtensionContext): void {
         if (choice === 'Audit Selection') await vscode.commands.executeCommand('diffguard.auditSelection');
         return;
       }
-      diff = await getGitDiff(workspaceRoot);
+      try {
+        diff = await getGitDiff(workspaceRoot);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        treeProvider.setError(`Audit failed: git error — ${message}`);
+        const retry = await vscode.window.showErrorMessage(
+          `DiffGuard: audit failed — git error — ${message}`,
+          'Retry'
+        );
+        if (retry === 'Retry') await vscode.commands.executeCommand('diffguard.auditChanges');
+        return;
+      }
     } else {
       const editor = vscode.window.activeTextEditor;
       if (!editor) {
@@ -128,8 +145,26 @@ export function activate(context: vscode.ExtensionContext): void {
     }
 
     treeProvider.setFindings(result.findings);
-    const uri = vscode.window.activeTextEditor?.document.uri;
-    if (uri) applyFindings(result.findings, uri, diagnostics, settings.severityThreshold);
+
+    const activeUri = vscode.window.activeTextEditor?.document.uri;
+    const byFile = new Map<string, Finding[]>();
+    for (const finding of result.findings) {
+      const list = byFile.get(finding.file) ?? [];
+      list.push(finding);
+      byFile.set(finding.file, list);
+    }
+    for (const [file, group] of byFile) {
+      const uri = resolveFindingUri(file);
+      if (uri) {
+        applyFindings(group, uri, diagnostics, settings.severityThreshold);
+      } else if (source === 'selection' && activeUri) {
+        // Selection audits have no reliable per-finding file path; fall back to the
+        // active editor so single-file selection audits still show squiggles.
+        applyFindings(group, activeUri, diagnostics, settings.severityThreshold);
+      }
+      // auditChanges with an unresolvable file: skip inline diagnostics for this
+      // group. The tree view still surfaces these findings, so nothing is lost.
+    }
   }
 }
 
