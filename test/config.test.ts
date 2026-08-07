@@ -5,7 +5,7 @@ import type { Severity } from '../src/findingsModel.js';
 describe('loadConfig', () => {
   it('applies defaults for a bare env', () => {
     const c = loadConfig({} as NodeJS.ProcessEnv);
-    expect(c).toEqual({ model: 'claude-sonnet-5', severityThreshold: 'medium', securityEnabled: true, behaviorEnabled: true, maxDiffTokens: 8000 });
+    expect(c).toEqual({ model: 'claude-sonnet-5', severityThreshold: 'medium', securityEnabled: true, behaviorEnabled: true, maxDiffTokens: 8000, provider: 'anthropic', baseUrl: undefined });
   });
   it('reads DIFFGUARD_MODEL', () => {
     expect(loadConfig({ DIFFGUARD_MODEL: 'claude-opus-5' } as NodeJS.ProcessEnv).model).toBe('claude-opus-5');
@@ -37,6 +37,24 @@ describe('loadConfig', () => {
   });
   it('throws on a hex-formatted maxDiffTokens', () => {
     expect(() => loadConfig({ DIFFGUARD_MAX_DIFF_TOKENS: '0x1F' } as NodeJS.ProcessEnv)).toThrow(/maxDiffTokens/i);
+  });
+});
+
+describe('loadConfig provider', () => {
+  it('defaults the provider to anthropic', () => {
+    expect(loadConfig({} as NodeJS.ProcessEnv).provider).toBe('anthropic');
+  });
+  it('reads DIFFGUARD_PROVIDER=openai', () => {
+    expect(loadConfig({ DIFFGUARD_PROVIDER: 'openai' } as NodeJS.ProcessEnv).provider).toBe('openai');
+  });
+  it('throws on an invalid provider', () => {
+    expect(() => loadConfig({ DIFFGUARD_PROVIDER: 'gemini' } as NodeJS.ProcessEnv)).toThrow(/provider/i);
+  });
+  it('reads DIFFGUARD_BASE_URL', () => {
+    expect(loadConfig({ DIFFGUARD_BASE_URL: 'http://localhost:11434/v1' } as NodeJS.ProcessEnv).baseUrl).toBe('http://localhost:11434/v1');
+  });
+  it('leaves baseUrl unset by default', () => {
+    expect(loadConfig({} as NodeJS.ProcessEnv).baseUrl).toBeUndefined();
   });
 });
 

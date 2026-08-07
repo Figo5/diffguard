@@ -7,7 +7,7 @@ const FINDING: Finding = { category: 'security', severity: 'high', file: 'a.ts',
 function deps(over: Partial<RunDeps> = {}): RunDeps {
   return {
     getApiKey: () => 'sk-test',
-    getSettings: () => ({ model: 'm', severityThreshold: 'medium', securityEnabled: true, behaviorEnabled: true, maxDiffTokens: 8000 }),
+    getSettings: () => ({ model: 'm', severityThreshold: 'medium', securityEnabled: true, behaviorEnabled: true, maxDiffTokens: 8000, provider: 'anthropic' }),
     isGitRepo: async () => true,
     getGitDiff: async () => 'diff --git a/a.ts b/a.ts',
     detectRepoContext: () => '',

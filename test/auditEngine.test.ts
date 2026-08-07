@@ -9,6 +9,7 @@ const SETTINGS: DiffGuardSettings = {
   securityEnabled: true,
   behaviorEnabled: true,
   maxDiffTokens: 8000,
+  provider: 'anthropic',
 };
 
 function fakeLlm(text: string): LlmClient {

@@ -6,4 +6,6 @@ export interface DiffGuardSettings {
   securityEnabled: boolean;
   behaviorEnabled: boolean;
   maxDiffTokens: number;
+  provider: 'anthropic' | 'openai';
+  baseUrl?: string;
 }

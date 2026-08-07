@@ -30,6 +30,12 @@ function requireNumber(value: string | undefined, name: string, fallback: number
   return Number(raw);
 }
 
+function requireProvider(value: string | undefined): 'anthropic' | 'openai' {
+  if (value === undefined) return 'anthropic';
+  if (value === 'anthropic' || value === 'openai') return value;
+  throw new Error(`Invalid DIFFGUARD_PROVIDER: '${value}' (expected 'anthropic' or 'openai')`);
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv): DiffGuardSettings {
   return {
     model: env.DIFFGUARD_MODEL ?? 'claude-sonnet-5',
@@ -37,6 +43,8 @@ export function loadConfig(env: NodeJS.ProcessEnv): DiffGuardSettings {
     securityEnabled: requireBoolean(env.DIFFGUARD_SECURITY_ENABLED, 'DIFFGUARD_SECURITY_ENABLED'),
     behaviorEnabled: requireBoolean(env.DIFFGUARD_BEHAVIOR_ENABLED, 'DIFFGUARD_BEHAVIOR_ENABLED'),
     maxDiffTokens: requireNumber(env.DIFFGUARD_MAX_DIFF_TOKENS, 'DIFFGUARD_MAX_DIFF_TOKENS', 8000),
+    provider: requireProvider(env.DIFFGUARD_PROVIDER),
+    baseUrl: env.DIFFGUARD_BASE_URL?.trim() || undefined,
   };
 }
 
