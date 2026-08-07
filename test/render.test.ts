@@ -30,6 +30,9 @@ describe('renderHuman', () => {
   it('renders a clean message when there are no findings', () => {
     expect(renderHuman([], { threshold: 'medium', dropped: 0, truncated: false, fileCount: 3 })).toContain('No issues found in 3 files');
   });
+  it('singularizes the clean message for a single file', () => {
+    expect(renderHuman([], { threshold: 'medium', dropped: 0, truncated: false, fileCount: 1 })).toBe('No issues found in 1 file.');
+  });
   it('reports dropped and truncated when non-zero', () => {
     const out = renderHuman(FINDINGS, { threshold: 'low', dropped: 2, truncated: true, fileCount: 2 });
     expect(out).toContain('2 dropped');

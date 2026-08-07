@@ -21,7 +21,7 @@ export function renderHuman(findings: Finding[], opts: HumanOptions): string {
   if (opts.truncated) metadataParts.push('partial audit (diff truncated)');
 
   if (shown.length === 0) {
-    const msg = `No issues found in ${opts.fileCount} files.`;
+    const msg = `No issues found in ${opts.fileCount} file${opts.fileCount === 1 ? '' : 's'}.`;
     if (metadataParts.length === 0) {
       return msg;
     }
