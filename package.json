@@ -24,6 +24,11 @@
         "diffguard.behaviorEnabled": { "type": "boolean", "default": true, "description": "Audit for behavior changes." },
         "diffguard.maxDiffTokens": { "type": "number", "default": 8000, "description": "Max diff size in tokens before truncation (audit becomes partial)." }
       }
+    },
+    "views": {
+      "explorer": [
+        { "id": "diffguard.findings", "name": "DiffGuard Findings" }
+      ]
     }
   },
   "scripts": {
