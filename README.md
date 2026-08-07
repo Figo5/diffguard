@@ -97,7 +97,7 @@ $ diffguard
 
 | Env var | Default | Meaning |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
+| `ANTHROPIC_API_KEY` | *(unset)* | API key. Checked first; falls back to the platform keychain. Not needed for local providers like Ollama. |
 | `DIFFGUARD_MODEL` | `claude-sonnet-5` | Model used for audits |
 | `DIFFGUARD_SEVERITY_THRESHOLD` | `medium` | Minimum severity shown in human output (`critical`/`high`/`medium`/`low`/`info`) |
 | `DIFFGUARD_SECURITY_ENABLED` | `true` | Audit for security issues |
