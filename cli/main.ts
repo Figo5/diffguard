@@ -39,7 +39,7 @@ Exit codes:
   2  error (missing key, not a git repo, or audit failure)
 
 Environment:
-  ANTHROPIC_API_KEY            required
+  ANTHROPIC_API_KEY            API key (env var; falls back to the platform keychain)
   DIFFGUARD_MODEL              model (default claude-sonnet-5)
   DIFFGUARD_SEVERITY_THRESHOLD minimum severity shown in human output (default medium)
   DIFFGUARD_SECURITY_ENABLED   audit security issues (default true)

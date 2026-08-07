@@ -74,4 +74,44 @@ describe('handleConfigCommand', () => {
     expect(log.mock.calls.join('\n')).not.toContain('sk-');
     log.mockRestore();
   });
+  it('--show returns 2 with a friendly error when the config file is unreadable', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const d = deps({ readConfigFile: async () => { throw new Error('bad json'); } });
+    expect(await handleConfigCommand(['--show'], d)).toBe(2);
+    expect(err).toHaveBeenCalledWith(expect.stringContaining('could not read config — bad json'));
+    err.mockRestore();
+  });
+  it('--show returns 2 with a friendly error on an invalid provider in the file', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const d = deps({ readConfigFile: async () => ({ provider: 'gemini' } as never) });
+    expect(await handleConfigCommand(['--show'], d)).toBe(2);
+    expect(err).toHaveBeenCalledWith(expect.stringContaining('could not read config —'));
+    err.mockRestore();
+  });
+  it('--show reports the key source as env when ANTHROPIC_API_KEY is set', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const prev = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'sk-env-test';
+    try {
+      const d = deps();
+      expect(await handleConfigCommand(['--show'], d)).toBe(0);
+      expect(log.mock.calls.join('\n')).toContain('key:      env');
+    } finally {
+      if (prev === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = prev;
+      log.mockRestore();
+    }
+  });
+  it('applyFlags treats a set ANTHROPIC_API_KEY as satisfying the key requirement', async () => {
+    const prev = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'sk-env-test';
+    try {
+      const d = deps();
+      expect(await handleConfigCommand(['--provider=anthropic'], d)).toBe(0);
+      expect(d.writeConfigFile).toHaveBeenCalledWith('/tmp/diffguard-config.json', { provider: 'anthropic', model: 'claude-sonnet-5', baseUrl: undefined, needsKey: true });
+    } finally {
+      if (prev === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = prev;
+    }
+  });
 });

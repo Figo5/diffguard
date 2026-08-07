@@ -25,6 +25,11 @@ needed. Non-interactive setup is available too:
     diffguard config --show    # print the effective config (never the key)
     diffguard config --reset   # clear the saved config
 
+Note: `diffguard config --key=...` puts the key on the command line, where it's visible
+in shell history and to anyone who can list processes on the machine. Prefer the
+interactive wizard (`diffguard config`) or `diffguard key set`, which read the key from a
+hidden prompt or stdin instead.
+
 You can still configure everything with env vars instead — see the Configuration table.
 Env vars always override the saved config file.
 

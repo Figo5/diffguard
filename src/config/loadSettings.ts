@@ -22,7 +22,7 @@ function requireBoolean(value: string | undefined, name: string): boolean {
 function requireNumber(value: string | undefined, name: string, fallback: number): number {
   if (value === undefined) return fallback;
   const raw = value.trim();
-  if (!/^\d+$/.test(raw)) throw new Error(`Invalid maxDiffTokens: '${value}' (expected a decimal number)`);
+  if (!/^\d+$/.test(raw)) throw new Error(`Invalid ${name}: '${value}' (expected a decimal number)`);
   return Number(raw);
 }
 
@@ -38,7 +38,7 @@ export function loadSettings(env: NodeJS.ProcessEnv, file: ConfigFile | null): D
     severityThreshold: requireSeverity(env.DIFFGUARD_SEVERITY_THRESHOLD, 'DIFFGUARD_SEVERITY_THRESHOLD'),
     securityEnabled: requireBoolean(env.DIFFGUARD_SECURITY_ENABLED, 'DIFFGUARD_SECURITY_ENABLED'),
     behaviorEnabled: requireBoolean(env.DIFFGUARD_BEHAVIOR_ENABLED, 'DIFFGUARD_BEHAVIOR_ENABLED'),
-    maxDiffTokens: requireNumber(env.DIFFGUARD_MAX_DIFF_TOKENS, 'DIFFGUARD_MAX_DIFF_TOKENS', 8000),
+    maxDiffTokens: requireNumber(env.DIFFGUARD_MAX_DIFF_TOKENS, 'maxDiffTokens', 8000),
     provider: requireProvider(env.DIFFGUARD_PROVIDER ?? file?.provider),
     baseUrl: env.DIFFGUARD_BASE_URL?.trim() || file?.baseUrl?.trim() || undefined,
   };

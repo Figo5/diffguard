@@ -6,6 +6,7 @@ import { configFilePath, readConfigFile, writeConfigFile, deleteConfigFile, type
 import { loadSettings } from '../src/config/loadSettings.js';
 import { setKeyInKeychain, getKeyFromKeychain } from '../agent/keychain.js';
 import { readHiddenLine } from './key.js';
+import { resolveKeySource } from './config.js';
 
 export interface ConfigDeps {
   readConfigFile: (path: string) => Promise<ConfigFile | null>;
@@ -74,9 +75,15 @@ export async function handleConfigCommand(argv: string[], deps: ConfigDeps = rea
   const path = deps.configFilePath(process.env);
 
   if (flags.show) {
-    const file = await deps.readConfigFile(path);
-    const settings = loadSettings(process.env, file);
-    const keySource = process.env.ANTHROPIC_API_KEY?.trim() ? 'env' : (await deps.getKeyFromKeychain()) ? 'keychain' : 'none';
+    let settings: ReturnType<typeof loadSettings>;
+    try {
+      const file = await deps.readConfigFile(path);
+      settings = loadSettings(process.env, file);
+    } catch (err) {
+      console.error(`DiffGuard: could not read config — ${err instanceof Error ? err.message : String(err)}`);
+      return 2;
+    }
+    const keySource = await resolveKeySource(process.env, deps.getKeyFromKeychain);
     console.log('DiffGuard config:');
     console.log(`  provider: ${settings.provider}`);
     console.log(`  model:    ${settings.model}`);
@@ -97,6 +104,26 @@ export async function handleConfigCommand(argv: string[], deps: ConfigDeps = rea
   return runWizard(path, deps);
 }
 
+/**
+ * Stores a key in the keychain. Returns 2 (an exit code) if storing fails,
+ * or null on success.
+ */
+async function storeKey(key: string, deps: ConfigDeps): Promise<number | null> {
+  try {
+    await deps.setKeyInKeychain(key);
+    return null;
+  } catch (err) {
+    console.error(`DiffGuard: could not store the key — ${err instanceof Error ? err.message : String(err)}`);
+    return 2;
+  }
+}
+
+async function finishConfig(path: string, cfg: ConfigFile, deps: ConfigDeps): Promise<number> {
+  await deps.writeConfigFile(path, cfg);
+  console.log(`DiffGuard: config saved (provider: ${cfg.provider}, model: ${cfg.model}).`);
+  return 0;
+}
+
 async function applyFlags(flags: ConfigFlags, path: string, deps: ConfigDeps): Promise<number> {
   const preset = flags.provider !== undefined ? getPreset(flags.provider) : undefined;
   if (flags.provider !== undefined && !preset) {
@@ -112,20 +139,15 @@ async function applyFlags(flags: ConfigFlags, path: string, deps: ConfigDeps): P
     return 2;
   }
   if (flags.key) {
-    try {
-      await deps.setKeyInKeychain(flags.key);
-    } catch (err) {
-      console.error(`DiffGuard: could not store the key — ${err instanceof Error ? err.message : String(err)}`);
-      return 2;
-    }
+    const failure = await storeKey(flags.key, deps);
+    if (failure !== null) return failure;
   }
-  if (needsKey && !flags.key && !(await deps.getKeyFromKeychain())) {
+  const hasKey = flags.key || process.env.ANTHROPIC_API_KEY?.trim() || (await deps.getKeyFromKeychain());
+  if (needsKey && !hasKey) {
     console.error('DiffGuard: this provider needs an API key. Pass --key, run `diffguard key set`, or run `diffguard config` interactively.');
     return 2;
   }
-  await deps.writeConfigFile(path, { provider, model, baseUrl, needsKey });
-  console.log(`DiffGuard: config saved (provider: ${provider}, model: ${model}).`);
-  return 0;
+  return finishConfig(path, { provider, model, baseUrl, needsKey }, deps);
 }
 
 async function runWizard(path: string, deps: ConfigDeps): Promise<number> {
@@ -174,15 +196,9 @@ async function runWizard(path: string, deps: ConfigDeps): Promise<number> {
       console.error('DiffGuard: no API key provided. Run `diffguard config` again or `diffguard key set`.');
       return 2;
     }
-    try {
-      await deps.setKeyInKeychain(key);
-    } catch (err) {
-      console.error(`DiffGuard: could not store the key — ${err instanceof Error ? err.message : String(err)}`);
-      return 2;
-    }
+    const failure = await storeKey(key, deps);
+    if (failure !== null) return failure;
   }
 
-  await deps.writeConfigFile(path, { provider, model, baseUrl, needsKey });
-  console.log(`DiffGuard: config saved (provider: ${provider}, model: ${model}).`);
-  return 0;
+  return finishConfig(path, { provider, model, baseUrl, needsKey }, deps);
 }

@@ -23,3 +23,12 @@ export async function resolveCliKey(
   if (envKey && envKey.length > 0) return envKey;
   return keychain();
 }
+
+export async function resolveKeySource(
+  env: NodeJS.ProcessEnv,
+  keychain: () => Promise<string | null>
+): Promise<'env' | 'keychain' | 'none'> {
+  const envKey = env.ANTHROPIC_API_KEY?.trim();
+  if (envKey && envKey.length > 0) return 'env';
+  return (await keychain()) ? 'keychain' : 'none';
+}

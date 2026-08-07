@@ -34,13 +34,13 @@ export const realDeps: RunDeps = {
 
 export function friendlyError(message: string): string {
   const m = message.toLowerCase();
-  if (/model/i.test(m) && /not found|does not exist|unknown model/i.test(m)) {
+  if (/model/.test(m) && /not found|does not exist|unknown model/.test(m)) {
     return `${message} — check the model with \`diffguard config\`.`;
   }
-  if (/401|unauthorized|invalid api key|authentication/i.test(m)) {
+  if (/401|unauthorized|invalid api key|authentication/.test(m)) {
     return `${message} — check your API key with \`diffguard config\` or \`diffguard key set\`.`;
   }
-  if (/econnrefused|fetch failed|connect|network/i.test(m)) {
+  if (/econnrefused|fetch failed|connect|network/.test(m)) {
     return `${message} — could not reach the provider. Is it running? Check \`diffguard config\`.`;
   }
   return message;
@@ -48,13 +48,14 @@ export function friendlyError(message: string): string {
 
 export async function run(cli: CliOptions, deps: RunDeps = realDeps): Promise<number> {
   let file: ConfigFile | null = null;
+  let settings: DiffGuardSettings;
   try {
     file = await deps.readConfigFile(deps.configFilePath(process.env));
+    settings = deps.getSettings(process.env, file);
   } catch (err) {
     console.error(`DiffGuard: could not read config — ${err instanceof Error ? err.message : String(err)}`);
     return 2;
   }
-  const settings = deps.getSettings(process.env, file);
   const needsKey = file?.needsKey !== false;
   const apiKey = needsKey ? await deps.getApiKey(process.env) : 'local';
   if (!apiKey) {

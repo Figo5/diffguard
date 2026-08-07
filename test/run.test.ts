@@ -87,4 +87,7 @@ describe('run', () => {
   it('friendlyError passes through unrelated messages', () => {
     expect(friendlyError('boom')).toBe('boom');
   });
+  it('friendlyError appends a hint for connection/network errors', () => {
+    expect(friendlyError('ECONNREFUSED connecting to localhost')).toContain('diffguard config');
+  });
 });
