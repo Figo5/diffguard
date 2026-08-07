@@ -37,7 +37,9 @@ Environment:
   DIFFGUARD_SEVERITY_THRESHOLD minimum severity shown in human output (default medium)
   DIFFGUARD_SECURITY_ENABLED   audit security issues (default true)
   DIFFGUARD_BEHAVIOR_ENABLED   audit behavior changes (default true)
-  DIFFGUARD_MAX_DIFF_TOKENS    max diff size before truncation (default 8000)`;
+  DIFFGUARD_MAX_DIFF_TOKENS    max diff size before truncation (default 8000)
+  DIFFGUARD_PROVIDER           provider: anthropic or openai (default anthropic)
+  DIFFGUARD_BASE_URL           base URL for OpenAI-compatible providers (default unset)`;
 
 export async function main(argv: string[] = process.argv, deps = realDeps): Promise<void> {
   const raw = argv.slice(2);

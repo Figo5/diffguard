@@ -1,8 +1,6 @@
-import { AuditEngine } from '../src/auditEngine/auditEngine.js';
-import { AnthropicLlmClient } from '../src/auditEngine/llmClient.js';
 import { detectRepoContext } from '../src/auditEngine/repoContext.js';
 import { isGitRepo, getGitDiff } from '../src/diffProvider.js';
-import Anthropic from '@anthropic-ai/sdk';
+import { createEngine } from '../src/auditEngine/engineFactory.js';
 import { getApiKey, loadConfig, type CliOptions } from './config.js';
 import { renderHuman, renderJson } from './render.js';
 import type { DiffGuardSettings } from '../src/types.js';
@@ -25,7 +23,7 @@ export const realDeps: RunDeps = {
   isGitRepo,
   getGitDiff,
   detectRepoContext,
-  createEngine: (settings, apiKey) => new AuditEngine({ llm: new AnthropicLlmClient(new Anthropic({ apiKey })), getSettings: () => settings }),
+  createEngine,
   render: (findings, opts) => (opts.json ? renderJson(findings, { dropped: opts.dropped, truncated: opts.truncated, repoContext: opts.repoContext }) : renderHuman(findings, { threshold: opts.threshold, dropped: opts.dropped, truncated: opts.truncated, fileCount: opts.fileCount })),
 };
 
