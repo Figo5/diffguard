@@ -40,7 +40,7 @@ rendering, exit codes).
 
 ```
 diffguard/                        ← main branch (CLI-first)
-├── src/                          ← engine library (kept as-is, unchanged except diffProvider)
+├── src/                          ← engine library (kept as-is except two type-path changes)
 │   ├── auditEngine/
 │   │   ├── auditEngine.ts        ← AuditEngine.audit({diff, repoContext}, signal?) → AuditResult
 │   │   ├── llmClient.ts          ← AnthropicLlmClient (Node-native)
@@ -48,6 +48,7 @@ diffguard/                        ← main branch (CLI-first)
 │   │   ├── findingsParser.ts
 │   │   └── repoContext.ts
 │   ├── findingsModel.ts          ← Finding, Severity, Category, validateFinding
+│   ├── types.ts                  ← NEW: DiffGuardSettings (moved here from settings.ts; no vscode)
 │   └── diffProvider.ts           ← isGitRepo, getGitDiff (gains a `staged` param)
 ├── cli/
 │   ├── config.ts                 ← env-var settings → DiffGuardSettings (no vscode types)
@@ -93,10 +94,11 @@ diffguard --version            version
 | `DIFFGUARD_BEHAVIOR_ENABLED` | `true` | Audit for behavior changes. |
 | `DIFFGUARD_MAX_DIFF_TOKENS` | `8000` | Max diff tokens before truncation → audit marked partial. |
 
-`DiffGuardSettings` (the engine's `getSettings` input type) is redefined in
-`cli/config.ts` without the `vscode` SecretStorage import — the engine imports it
-as a type only. Invalid enum/boolean/number values are a hard error (exit 2), not a
-silent fallback, because a pre-commit gate must fail loudly on misconfiguration.
+`DiffGuardSettings` lives in `src/types.ts` (engine-owned, no `vscode` import — a
+pure data interface). `auditEngine.ts`'s `import type` changes from `../settings` to
+`../types`; the CLI imports it from there too. Invalid enum/boolean/number values are a
+hard error (exit 2), not a silent fallback, because a pre-commit gate must fail loudly
+on misconfiguration.
 
 ## 6. Output & rendering
 
@@ -159,8 +161,10 @@ main.ts (parse args)
 
 ## 8. Testing
 
-- **Existing engine tests: all 52 stay green and untouched**, except `diffProvider.test.ts`
-  which gains cases for the new `staged` param (existing cases unchanged).
+- **Existing engine tests:** the 44 that cover surviving modules stay green and
+  untouched. `settings.test.ts` (5) and `diagnostics.test.ts` (3) are deleted with the
+  modules they test; `diffProvider.test.ts` gains cases for the new `staged` param
+  (existing cases unchanged).
 - **New CLI tests** (vitest, same fake-LLM pattern the engine already uses):
   - `config.test.ts` — env parsing, defaults, invalid severity/boolean/number → hard error.
   - `run.test.ts` — full orchestration with injected deps: exit 0/1/2 paths, empty diff,
