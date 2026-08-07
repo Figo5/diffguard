@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectRepoContext } from '../src/auditEngine/repoContext';
+import { detectRepoContext } from '../src/auditEngine/repoContext.js';
 
 describe('detectRepoContext', () => {
   it('detects languages from +++ file headers', () => {

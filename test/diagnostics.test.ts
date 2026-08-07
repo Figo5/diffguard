@@ -1,6 +1,6 @@
 // test/diagnostics.test.ts
 import { describe, it, expect } from 'vitest';
-import { severityToVscode } from '../src/diagnostics';
+import { severityToVscode } from '../src/diagnostics.js';
 
 describe('severityToVscode', () => {
   it('maps critical and high to Error', () => {

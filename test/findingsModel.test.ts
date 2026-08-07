@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateFinding } from '../src/findingsModel';
+import { validateFinding } from '../src/findingsModel.js';
 
 describe('validateFinding', () => {
   it('accepts a valid finding', () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { AuditEngine } from '../src/auditEngine/auditEngine';
-import type { LlmClient } from '../src/auditEngine/llmClient';
-import type { DiffGuardSettings } from '../src/settings';
+import { AuditEngine } from '../src/auditEngine/auditEngine.js';
+import type { LlmClient } from '../src/auditEngine/llmClient.js';
+import type { DiffGuardSettings } from '../src/types.js';
 
 const SETTINGS: DiffGuardSettings = {
   model: 'claude-sonnet-5',

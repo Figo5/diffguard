@@ -1,6 +1,6 @@
 // test/llmClient.test.ts
 import { describe, it, expect, vi } from 'vitest';
-import { AnthropicLlmClient } from '../src/auditEngine/llmClient';
+import { AnthropicLlmClient } from '../src/auditEngine/llmClient.js';
 
 function fakeAnthropic() {
   const stream = {

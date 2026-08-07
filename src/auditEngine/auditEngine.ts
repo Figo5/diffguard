@@ -1,8 +1,8 @@
-import { buildPrompt, truncateDiff } from './promptBuilder';
-import { parseFindings } from './findingsParser';
-import type { LlmClient } from './llmClient';
-import type { Finding } from '../findingsModel';
-import type { DiffGuardSettings } from '../settings';
+import { buildPrompt, truncateDiff } from './promptBuilder.js';
+import { parseFindings } from './findingsParser.js';
+import type { LlmClient } from './llmClient.js';
+import type { Finding } from '../findingsModel.js';
+import type { DiffGuardSettings } from '../types.js';
 
 export interface AuditRequest {
   diff: string;

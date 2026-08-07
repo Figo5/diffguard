@@ -1,4 +1,4 @@
-import { validateFinding, type Finding } from '../findingsModel';
+import { validateFinding, type Finding } from '../findingsModel.js';
 
 export interface ParseResult {
   findings: Finding[];

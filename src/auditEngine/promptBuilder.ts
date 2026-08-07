@@ -1,4 +1,4 @@
-import type { Category } from '../findingsModel';
+import type { Category } from '../findingsModel.js';
 
 export interface Truncation {
   diff: string;

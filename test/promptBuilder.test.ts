@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildPrompt, truncateDiff } from '../src/auditEngine/promptBuilder';
+import { buildPrompt, truncateDiff } from '../src/auditEngine/promptBuilder.js';
 
 const DIFF = 'diff --git a/src/auth.ts b/src/auth.ts\n@@ -40,3 +40,3 @@\n-  const q = "SELECT * FROM u WHERE id=" + id;\n+  const q = "SELECT * FROM u WHERE id=?";\n';
 

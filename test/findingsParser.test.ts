@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseFindings } from '../src/auditEngine/findingsParser';
+import { parseFindings } from '../src/auditEngine/findingsParser.js';
 
 describe('parseFindings', () => {
   it('parses a plain JSON array of findings', () => {
