@@ -12,6 +12,6 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["src", "cli"],
+  "include": ["src", "cli", "agent"],
   "exclude": ["node_modules", "dist", "test", "docs"]
 }

@@ -1,5 +1,6 @@
 import { run, realDeps } from './run.js';
 import type { CliOptions } from './config.js';
+import { handleKeyCommand } from './key.js';
 
 export const VERSION = '0.1.0';
 
@@ -26,6 +27,9 @@ Options:
   --help     show this help
   --version  print the version
 
+Commands:
+  key set [KEY]  store the API key in the platform keychain (reads stdin if KEY omitted)
+
 Exit codes:
   0  clean — no findings
   1  findings found
@@ -49,6 +53,10 @@ export async function main(argv: string[] = process.argv, deps = realDeps): Prom
   }
   if (raw.includes('--version') || raw.includes('-v')) {
     console.log(VERSION);
+    return;
+  }
+  if (raw[0] === 'key') {
+    process.exitCode = await handleKeyCommand(raw.slice(1));
     return;
   }
   let cli: CliOptions;
