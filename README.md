@@ -29,6 +29,27 @@ diffguard --staged   # audit the staged diff (pre-commit)
 diffguard --json     # machine-readable output
 ```
 
+### In coding agents
+
+DiffGuard is available as an on-demand audit tool inside coding agents:
+
+- **Pi** — install the extension at `~/.pi/agent/extensions/pi.ts` (or `.pi/extensions/pi.ts`).
+- **MCP-capable agents** (Claude Code, Codex, Cursor, Windsurf, Copilot, Cline) — run the
+  `diffguard-mcp` stdio server and add it as an MCP server.
+
+The agent calls the `diffguard_audit` tool with a `scope` argument:
+
+| Scope | Audits |
+| --- | --- |
+| `working` (default) | uncommitted changes |
+| `staged` | the git index (pre-commit) |
+| `file:<path>` | a single file |
+| `repo` | the whole repository (security only) |
+
+The tool returns a text report plus structured findings. The API key is resolved from the
+agent's own credential (Pi), `ANTHROPIC_API_KEY`, or the platform keychain
+(`diffguard key set`). The key never enters the agent's context.
+
 ### Exit codes
 
 | Code | Meaning |
@@ -65,6 +86,8 @@ $ diffguard
 | `DIFFGUARD_SECURITY_ENABLED` | `true` | Audit for security issues |
 | `DIFFGUARD_BEHAVIOR_ENABLED` | `true` | Audit for behavior changes |
 | `DIFFGUARD_MAX_DIFF_TOKENS` | `8000` | Max diff size before truncation (audit becomes partial) |
+| `DIFFGUARD_PROVIDER` | `anthropic` | Provider: `anthropic` or `openai` (OpenAI-compatible) |
+| `DIFFGUARD_BASE_URL` | *(unset)* | Base URL for OpenAI-compatible providers (e.g. `http://localhost:11434/v1`) |
 
 ## How it works
 

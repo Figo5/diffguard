@@ -12,6 +12,12 @@
     "diffguard": "bin/diffguard",
     "diffguard-mcp": "bin/diffguard-mcp"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
   "files": ["dist", "bin"],
   "scripts": {
     "clean": "rm -rf dist",
