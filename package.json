@@ -9,7 +9,8 @@
   },
   "type": "module",
   "bin": {
-    "diffguard": "bin/diffguard"
+    "diffguard": "bin/diffguard",
+    "diffguard-mcp": "bin/diffguard-mcp"
   },
   "files": ["dist", "bin"],
   "scripts": {
