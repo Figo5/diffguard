@@ -11,7 +11,7 @@ export interface KeyDeps {
 const BACKSPACE_CODES = new Set([8, 127]);
 const CTRL_C_CODE = 3;
 
-function readHiddenLine(prompt: string): Promise<string> {
+export function readHiddenLine(prompt: string): Promise<string> {
   return new Promise((resolve) => {
     const rl = createInterface({ input: stdin, output: stdout, terminal: true });
 

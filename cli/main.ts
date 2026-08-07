@@ -1,6 +1,7 @@
 import { run, realDeps } from './run.js';
 import type { CliOptions } from './config.js';
 import { handleKeyCommand } from './key.js';
+import { handleConfigCommand } from './configCmd.js';
 
 export const VERSION = '0.1.0';
 
@@ -29,6 +30,8 @@ Options:
 
 Commands:
   key set [KEY]  store the API key in the platform keychain (reads stdin if KEY omitted)
+  config         set up provider, model, and key interactively
+                 flags: --provider=<id> --model=<m> --base-url=<url> --key=<k> --show --reset
 
 Exit codes:
   0  clean — no findings
@@ -57,6 +60,10 @@ export async function main(argv: string[] = process.argv, deps = realDeps): Prom
   }
   if (raw[0] === 'key') {
     process.exitCode = await handleKeyCommand(raw.slice(1));
+    return;
+  }
+  if (raw[0] === 'config') {
+    process.exitCode = await handleConfigCommand(raw.slice(1));
     return;
   }
   let cli: CliOptions;
