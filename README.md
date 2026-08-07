@@ -1,85 +1,94 @@
 # DiffGuard
 
-DiffGuard audits code changes — AI-generated or hand-written — for **security issues**
-and **unintended behavior changes**, using your own Anthropic API key. It reads your
-current git diff (or a selection), sends it to Claude for review, and surfaces the
-findings as inline squiggles and a sidebar panel so you can catch problems before you
-commit.
+Audit code changes for **security issues** and **unintended behavior changes** using your
+own Anthropic API key. DiffGuard reads a git diff, sends it to Claude for review, and
+prints structured findings — or exits cleanly when nothing's wrong. Built for the
+terminal: works on any machine with `git` and Node, drops straight into CI and
+pre-commit hooks.
 
-![demo](docs/demo.gif)
+## Install
 
-> The GIF above is a placeholder. Replace `docs/demo.gif` with a real screen recording
-> of DiffGuard in action.
+```bash
+npm install -g diffguard
+```
 
 ## Setup
 
-1. Get an API key from [Anthropic](https://console.anthropic.com/).
-2. Run **"DiffGuard: Set API Key"** from the Command Palette and paste your key. It is
-   stored in VSCode's SecretStorage — see [Privacy](#privacy) below.
-3. Run **"DiffGuard: Audit Changes"** to scan your current git diff.
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Get a key at https://console.anthropic.com/. Your key is used only for requests to
+Anthropic; DiffGuard never logs or stores it.
 
 ## Usage
 
-DiffGuard exposes two commands from the Command Palette:
+```bash
+diffguard            # audit the working-tree diff
+diffguard --staged   # audit the staged diff (pre-commit)
+diffguard --json     # machine-readable output
+```
 
-- **DiffGuard: Audit Changes** — audits the working tree's git diff. If the current
-  folder isn't a git repository, DiffGuard offers to audit a selection instead.
-- **DiffGuard: Audit Selection** — audits the text currently selected in the active
-  editor. Useful outside a git repo, or to focus on a specific hunk.
+### Exit codes
 
-While an audit runs, a progress notification appears in the bottom-right corner with a
-cancel button. Findings are shown two ways:
+| Code | Meaning |
+| --- | --- |
+| 0 | Clean — no findings |
+| 1 | Findings found |
+| 2 | Error (missing key, not a git repo, audit failure) |
 
-- **Inline squiggles** in the editor, at the line each finding applies to.
-- **DiffGuard Findings**, a panel in the Explorer sidebar. Clicking a finding jumps to
-  its location in the file.
+Use it as a pre-commit gate:
 
-### Settings
+```bash
+# .git/hooks/pre-commit, or via a pre-commit framework
+diffguard --staged || exit 1
+```
 
-Configure DiffGuard under `Settings → Extensions → DiffGuard`, or directly in
-`settings.json`:
+### Example
 
-| Setting | Default | Description |
+```
+$ diffguard
+[security] high  src/auth.ts:42
+  Credentials compared with == instead of a constant-time comparison.
+  Fix: use crypto.timingSafeEqual.
+
+2 findings (1 security, 1 behavior)
+```
+
+### Configuration
+
+| Env var | Default | Meaning |
 | --- | --- | --- |
-| `diffguard.model` | `claude-sonnet-5` | Anthropic model used for audits. |
-| `diffguard.severityThreshold` | `medium` | Minimum severity shown (`critical`, `high`, `medium`, `low`, `info`). |
-| `diffguard.securityEnabled` | `true` | Audit for security issues. |
-| `diffguard.behaviorEnabled` | `true` | Audit for unintended behavior changes. |
-| `diffguard.maxDiffTokens` | `8000` | Max diff size (in tokens) before the diff is truncated and the audit is marked partial. |
+| `ANTHROPIC_API_KEY` | *(required)* | Anthropic API key |
+| `DIFFGUARD_MODEL` | `claude-sonnet-5` | Model used for audits |
+| `DIFFGUARD_SEVERITY_THRESHOLD` | `medium` | Minimum severity shown in human output (`critical`/`high`/`medium`/`low`/`info`) |
+| `DIFFGUARD_SECURITY_ENABLED` | `true` | Audit for security issues |
+| `DIFFGUARD_BEHAVIOR_ENABLED` | `true` | Audit for behavior changes |
+| `DIFFGUARD_MAX_DIFF_TOKENS` | `8000` | Max diff size before truncation (audit becomes partial) |
 
 ## How it works
 
-1. DiffGuard collects your git diff (or selection) and some lightweight repo context.
+1. DiffGuard collects the git diff and some lightweight repo context.
 2. It builds a prompt instructing Claude to return findings as strict JSON, and streams
-   the response with a cancellable progress notification.
-3. The response is parsed and validated — malformed findings are dropped and reported,
+   the response (cancel with `Ctrl-C`).
+3. The response is parsed and validated — malformed findings are dropped and counted,
    never silently accepted.
-4. Validated findings are rendered as inline diagnostics (filtered by your severity
-   threshold) and listed in the DiffGuard Findings panel.
+4. Findings print as a grouped report, or as raw JSON with `--json`.
 
-If the diff is empty, DiffGuard tells you there's nothing to audit rather than making a
-request. If the diff is too large, it's truncated to `diffguard.maxDiffTokens` and the
-audit is marked partial. If the model call fails, you get an error with a **Retry**
-option; findings from a cancelled audit are simply discarded and previous results stay
-visible.
+If the diff is empty, DiffGuard exits 0 without calling the API. If the diff is too
+large, it's truncated to `DIFFGUARD_MAX_DIFF_TOKENS` and the audit is marked partial.
 
 ## Privacy
 
-- Your Anthropic API key is stored **only** in VSCode's built-in SecretStorage. It is
-  never written to `settings.json`, never logged, and never leaves your machine except
-  in requests you make directly to Anthropic.
-- The diff (or selection) you audit **is sent to Anthropic** to generate findings. Don't
-  audit code you aren't comfortable sending to a third-party API.
+- The diff you audit is sent to Anthropic to generate findings. Don't audit code you
+  aren't comfortable sending to a third-party API.
 - DiffGuard makes no other network calls and collects no telemetry.
 
-## v2 roadmap
+## Roadmap
 
-These are ideas under consideration, not implemented in v1:
-
-- A pre-commit hook mode to audit automatically before each commit.
-- Auto-audit on edit, for near-real-time feedback.
-- Test-gap detection and license-compliance checks alongside security/behavior findings.
-- A richer webview report in place of (or alongside) the sidebar tree.
+- Pre-commit hook installer (`diffguard install`).
+- `--path` filtering, `--fail-on <severity>`.
+- Test-gap and license-compliance checks alongside security/behavior findings.
 
 ## License
 
