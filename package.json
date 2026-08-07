@@ -5,6 +5,10 @@
   "version": "0.1.0",
   "publisher": "Figo5",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Figo5/diffguard.git"
+  },
   "engines": { "vscode": "^1.90.0" },
   "categories": ["Linters", "Other"],
   "main": "./out/extension.js",
