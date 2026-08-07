@@ -1,0 +1,45 @@
+{
+  "name": "diffguard",
+  "displayName": "DiffGuard",
+  "description": "Audit code changes for security issues and unintended behavior changes using your own Anthropic API key.",
+  "version": "0.1.0",
+  "publisher": "Figo5",
+  "license": "MIT",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Linters", "Other"],
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      { "command": "diffguard.auditChanges", "title": "DiffGuard: Audit Changes" },
+      { "command": "diffguard.auditSelection", "title": "DiffGuard: Audit Selection" },
+      { "command": "diffguard.setApiKey", "title": "DiffGuard: Set API Key" }
+    ],
+    "configuration": {
+      "title": "DiffGuard",
+      "properties": {
+        "diffguard.model": { "type": "string", "default": "claude-sonnet-5", "description": "Anthropic model used for audits." },
+        "diffguard.severityThreshold": { "type": "string", "enum": ["critical", "high", "medium", "low", "info"], "default": "medium", "description": "Minimum severity to display." },
+        "diffguard.securityEnabled": { "type": "boolean", "default": true, "description": "Audit for security issues." },
+        "diffguard.behaviorEnabled": { "type": "boolean", "default": true, "description": "Audit for behavior changes." },
+        "diffguard.maxDiffTokens": { "type": "number", "default": 8000, "description": "Max diff size in tokens before truncation (audit becomes partial)." }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "vitest run",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}
