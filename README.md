@@ -9,7 +9,7 @@ pre-commit hooks.
 ## Install
 
 ```bash
-npm install -g diffguard
+npm install -g @figo5/diffguard
 ```
 
 ## Setup

@@ -1,5 +1,5 @@
 {
-  "name": "diffguard",
+  "name": "@figo5/diffguard",
   "version": "0.1.0",
   "description": "Audit code changes for security issues and unintended behavior changes using your own Anthropic API key.",
   "license": "MIT",
