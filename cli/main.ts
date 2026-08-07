@@ -1,9 +1,13 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { run, realDeps } from './run.js';
 import type { CliOptions } from './config.js';
 import { handleKeyCommand } from './key.js';
 import { handleConfigCommand } from './configCmd.js';
 
-export const VERSION = '0.1.0';
+export const VERSION = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../../package.json', import.meta.url)), 'utf8')
+).version as string;
 
 export function parseArgs(argv: string[]): CliOptions {
   const opts: CliOptions = { staged: false, json: false };
