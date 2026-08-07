@@ -51,7 +51,7 @@ export async function main(argv: string[] = process.argv, deps = realDeps): Prom
   }
   let cli: CliOptions;
   try {
-    cli = parseArgs(raw);
+    cli = parseArgs(['diffguard', ...raw]);
   } catch (err) {
     console.error(err instanceof Error ? err.message : String(err));
     console.error('Run `diffguard --help` for usage.');
