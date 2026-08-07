@@ -1,53 +1,30 @@
 {
   "name": "diffguard",
-  "displayName": "DiffGuard",
-  "description": "Audit code changes for security issues and unintended behavior changes using your own Anthropic API key.",
   "version": "0.1.0",
-  "publisher": "Figo5",
+  "description": "Audit code changes for security issues and unintended behavior changes using your own Anthropic API key.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/Figo5/diffguard.git"
   },
-  "engines": { "vscode": "^1.90.0" },
-  "categories": ["Linters", "Other"],
-  "main": "./out/extension.js",
-  "activationEvents": [],
-  "contributes": {
-    "commands": [
-      { "command": "diffguard.auditChanges", "title": "DiffGuard: Audit Changes" },
-      { "command": "diffguard.auditSelection", "title": "DiffGuard: Audit Selection" },
-      { "command": "diffguard.setApiKey", "title": "DiffGuard: Set API Key" }
-    ],
-    "configuration": {
-      "title": "DiffGuard",
-      "properties": {
-        "diffguard.model": { "type": "string", "default": "claude-sonnet-5", "description": "Anthropic model used for audits." },
-        "diffguard.severityThreshold": { "type": "string", "enum": ["critical", "high", "medium", "low", "info"], "default": "medium", "description": "Minimum severity for inline diagnostics." },
-        "diffguard.securityEnabled": { "type": "boolean", "default": true, "description": "Audit for security issues." },
-        "diffguard.behaviorEnabled": { "type": "boolean", "default": true, "description": "Audit for behavior changes." },
-        "diffguard.maxDiffTokens": { "type": "number", "default": 8000, "description": "Max diff size in tokens before truncation (audit becomes partial)." }
-      }
-    },
-    "views": {
-      "explorer": [
-        { "id": "diffguard.findings", "name": "DiffGuard Findings" }
-      ]
-    }
+  "type": "module",
+  "bin": {
+    "diffguard": "bin/diffguard"
   },
+  "files": ["dist", "bin"],
   "scripts": {
-    "compile": "tsc -p ./",
+    "build": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "test": "vitest run --passWithNoTests",
-    "package": "vsce package"
+    "test": "vitest run",
+    "cli": "node bin/diffguard",
+    "start": "node dist/cli/main.js",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "@types/vscode": "^1.90.0",
-    "@vscode/vsce": "^3.0.0",
     "typescript": "^5.5.0",
     "vitest": "^2.0.0"
   }
