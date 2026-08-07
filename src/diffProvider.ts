@@ -51,7 +51,13 @@ export async function getRepoFiles(cwd: string, opts: { maxChars: number }): Pro
   let truncated = false;
   let fileCount = 0;
   for (const p of paths) {
-    const content = await readFileAsync(join(cwd, p), 'utf8');
+    let content: string;
+    try {
+      content = await readFileAsync(join(cwd, p), 'utf8');
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException)?.code === 'ENOENT') continue; // deleted from working tree
+      throw err;
+    }
     if (content.includes('\0')) continue; // binary
     const block = `=== ${p} ===\n${content}`;
     if (blocks.length > 0 && total + block.length > opts.maxChars) {

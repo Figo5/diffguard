@@ -114,4 +114,13 @@ describe('getRepoFiles', () => {
     expect(r.truncated).toBe(true);
     expect(r.fileCount).toBe(1); // only the first file fits
   });
+
+  it('skips a tracked file that has been deleted from the working tree', async () => {
+    rmSync(join(repo, 'b.ts'));
+    const r = await getRepoFiles(repo, { maxChars: 100000 });
+    expect(r.files).toContain('=== a.ts ===');
+    expect(r.files).not.toContain('=== b.ts ===');
+    // restore for any subsequent tests
+    writeFileSync(join(repo, 'b.ts'), 'const b = 2;\n');
+  });
 });

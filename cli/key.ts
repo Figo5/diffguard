@@ -8,16 +8,61 @@ export interface KeyDeps {
   readStdinLine: () => Promise<string>;
 }
 
+const BACKSPACE_CODES = new Set([8, 127]);
+const CTRL_C_CODE = 3;
+
+function readHiddenLine(prompt: string): Promise<string> {
+  return new Promise((resolve) => {
+    const rl = createInterface({ input: stdin, output: stdout, terminal: true });
+
+    if (!stdin.isTTY) {
+      // Not a real terminal (e.g. piped input) — echo suppression is moot.
+      rl.question(prompt, (line) => {
+        rl.close();
+        resolve(line.trim());
+      });
+      return;
+    }
+
+    stdout.write(prompt);
+    stdin.setRawMode?.(true);
+    stdin.resume();
+    stdin.setEncoding('utf8');
+
+    let answer = '';
+    const cleanup = () => {
+      stdin.setRawMode?.(false);
+      stdin.pause();
+      stdin.removeListener('data', onData);
+      rl.close();
+    };
+    const onData = (chunk: string) => {
+      for (const char of chunk) {
+        const code = char.charCodeAt(0);
+        if (char === '\n' || char === '\r') {
+          cleanup();
+          stdout.write('\n');
+          resolve(answer.trim());
+          return;
+        }
+        if (code === CTRL_C_CODE) {
+          cleanup();
+          process.exit(130);
+        }
+        if (BACKSPACE_CODES.has(code)) {
+          answer = answer.slice(0, -1);
+          continue;
+        }
+        answer += char;
+      }
+    };
+    stdin.on('data', onData);
+  });
+}
+
 export const realKeyDeps: KeyDeps = {
   setKeyInKeychain,
-  readStdinLine: () =>
-    new Promise((resolve) => {
-      const rl = createInterface({ input: stdin, output: stdout });
-      rl.question('Paste your API key (input is hidden): ', (answer) => {
-        rl.close();
-        resolve(answer.trim());
-      });
-    }),
+  readStdinLine: () => readHiddenLine('Paste your API key (input is hidden): '),
 };
 
 export async function handleKeyCommand(argv: string[], deps: KeyDeps = realKeyDeps): Promise<number> {

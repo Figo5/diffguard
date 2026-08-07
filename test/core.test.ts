@@ -196,4 +196,44 @@ describe('runAudit', () => {
     });
     expect(result.error).toBe('cancelled');
   });
+
+  it('resolves with an error instead of rejecting when a git call throws', async () => {
+    const result = await runAudit({
+      cwd: '/repo',
+      scope: 'working',
+      env: { ANTHROPIC_API_KEY: 'sk-test' },
+      settings: SETTINGS,
+      deps: {
+        isGitRepo: async () => true,
+        getGitDiff: async () => {
+          throw new Error('fatal: not a git repository (boom)');
+        },
+        getRepoFiles: async () => ({ files: '', truncated: false, fileCount: 0 }),
+        detectRepoContext: () => '',
+        createEngine: () => ({ audit: async () => ({ findings: [], dropped: 0, truncated: false, error: null }), auditRepo: async () => ({ findings: [], dropped: 0, truncated: false, error: null }) }) as never,
+      },
+    });
+    expect(result.error).toContain('boom');
+    expect(result.findings).toEqual([]);
+    expect(result.text).toBe('');
+  });
+
+  it('resolves with an error instead of throwing when the scope is invalid', async () => {
+    const result = await runAudit({
+      cwd: '/repo',
+      scope: 'bogus',
+      env: { ANTHROPIC_API_KEY: 'sk-test' },
+      settings: SETTINGS,
+      deps: {
+        isGitRepo: async () => true,
+        getGitDiff: async () => '',
+        getRepoFiles: async () => ({ files: '', truncated: false, fileCount: 0 }),
+        detectRepoContext: () => '',
+        createEngine: () => ({ audit: async () => ({ findings: [], dropped: 0, truncated: false, error: null }), auditRepo: async () => ({ findings: [], dropped: 0, truncated: false, error: null }) }) as never,
+      },
+    });
+    expect(result.error).toContain('scope');
+    expect(result.findings).toEqual([]);
+    expect(result.text).toBe('');
+  });
 });

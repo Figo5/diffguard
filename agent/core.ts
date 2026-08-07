@@ -105,33 +105,56 @@ function renderReport(findings: Finding[], meta: { dropped: number; truncated: b
 
 export async function runAudit(input: RunAuditInput): Promise<RunAuditResult> {
   const deps = { ...realDeps, ...input.deps };
-  const parsed = parseScope(input.scope);
+
+  let parsed: ParsedScope;
+  try {
+    parsed = parseScope(input.scope);
+  } catch (err) {
+    return { text: '', findings: [], error: err instanceof Error ? err.message : String(err) };
+  }
+
   const apiKey = await resolveCredentials(input.env, input.agentAuth);
   if (!apiKey) {
     return { text: '', findings: [], error: 'no API key configured — set ANTHROPIC_API_KEY or run `diffguard key set`' };
   }
-  if (!(await deps.isGitRepo(input.cwd))) {
-    return { text: '', findings: [], error: 'not a git repository' };
-  }
 
-  const engine = deps.createEngine(input.settings, apiKey);
-
-  if (parsed.scope === 'repo') {
-    const files = await deps.getRepoFiles(input.cwd, { maxChars: input.settings.maxDiffTokens * 4 });
-    const result = await engine.auditRepo({ files: files.files, truncated: files.truncated }, input.signal);
-    return {
-      text: renderReport(result.findings, { dropped: result.dropped, truncated: result.truncated, fileCount: files.fileCount }),
-      findings: result.findings,
-      error: result.error,
-    };
-  }
-
-  if (parsed.scope === 'file') {
-    const resolved = resolvePath(input.cwd, parsed.path!);
-    if (resolved === null) {
-      return { text: '', findings: [], error: `file scope path '${parsed.path}' is outside the working directory` };
+  try {
+    if (!(await deps.isGitRepo(input.cwd))) {
+      return { text: '', findings: [], error: 'not a git repository' };
     }
-    const diff = await deps.getGitDiff(input.cwd, { paths: [parsed.path!] });
+
+    const engine = deps.createEngine(input.settings, apiKey);
+
+    if (parsed.scope === 'repo') {
+      const files = await deps.getRepoFiles(input.cwd, { maxChars: input.settings.maxDiffTokens * 4 });
+      const result = await engine.auditRepo({ files: files.files, truncated: files.truncated }, input.signal);
+      return {
+        text: renderReport(result.findings, { dropped: result.dropped, truncated: result.truncated, fileCount: files.fileCount }),
+        findings: result.findings,
+        error: result.error,
+      };
+    }
+
+    if (parsed.scope === 'file') {
+      const resolved = resolvePath(input.cwd, parsed.path!);
+      if (resolved === null) {
+        return { text: '', findings: [], error: `file scope path '${parsed.path}' is outside the working directory` };
+      }
+      const diff = await deps.getGitDiff(input.cwd, { paths: [parsed.path!] });
+      if (diff.trim() === '') {
+        return { text: 'No changes to audit.', findings: [], error: null };
+      }
+      const repoContext = deps.detectRepoContext(diff);
+      const result = await engine.audit({ diff, repoContext }, input.signal);
+      const fileCount = diff.split('\n').filter((l) => l.startsWith('+++ b/')).length;
+      return {
+        text: renderReport(result.findings, { dropped: result.dropped, truncated: result.truncated, fileCount }),
+        findings: result.findings,
+        error: result.error,
+      };
+    }
+
+    const diff = await deps.getGitDiff(input.cwd, { staged: parsed.scope === 'staged' });
     if (diff.trim() === '') {
       return { text: 'No changes to audit.', findings: [], error: null };
     }
@@ -143,20 +166,9 @@ export async function runAudit(input: RunAuditInput): Promise<RunAuditResult> {
       findings: result.findings,
       error: result.error,
     };
+  } catch (err) {
+    return { text: '', findings: [], error: err instanceof Error ? err.message : String(err) };
   }
-
-  const diff = await deps.getGitDiff(input.cwd, { staged: parsed.scope === 'staged' });
-  if (diff.trim() === '') {
-    return { text: 'No changes to audit.', findings: [], error: null };
-  }
-  const repoContext = deps.detectRepoContext(diff);
-  const result = await engine.audit({ diff, repoContext }, input.signal);
-  const fileCount = diff.split('\n').filter((l) => l.startsWith('+++ b/')).length;
-  return {
-    text: renderReport(result.findings, { dropped: result.dropped, truncated: result.truncated, fileCount }),
-    findings: result.findings,
-    error: result.error,
-  };
 }
 
 function resolvePath(cwd: string, p: string): string | null {
