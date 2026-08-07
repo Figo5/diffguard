@@ -23,7 +23,7 @@
       "title": "DiffGuard",
       "properties": {
         "diffguard.model": { "type": "string", "default": "claude-sonnet-5", "description": "Anthropic model used for audits." },
-        "diffguard.severityThreshold": { "type": "string", "enum": ["critical", "high", "medium", "low", "info"], "default": "medium", "description": "Minimum severity to display." },
+        "diffguard.severityThreshold": { "type": "string", "enum": ["critical", "high", "medium", "low", "info"], "default": "medium", "description": "Minimum severity for inline diagnostics." },
         "diffguard.securityEnabled": { "type": "boolean", "default": true, "description": "Audit for security issues." },
         "diffguard.behaviorEnabled": { "type": "boolean", "default": true, "description": "Audit for behavior changes." },
         "diffguard.maxDiffTokens": { "type": "number", "default": 8000, "description": "Max diff size in tokens before truncation (audit becomes partial)." }

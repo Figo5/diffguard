@@ -49,6 +49,9 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingNode
         title: 'Jump to finding',
         arguments: [element.finding],
       };
+      if (element.finding.suggestedFix) {
+        item.tooltip = `Fix: ${element.finding.suggestedFix}`;
+      }
     }
     return item;
   }

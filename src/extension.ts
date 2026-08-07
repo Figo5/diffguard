@@ -145,6 +145,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
 
     treeProvider.setFindings(result.findings);
+    diagnostics.clear();
 
     const activeUri = vscode.window.activeTextEditor?.document.uri;
     const byFile = new Map<string, Finding[]>();

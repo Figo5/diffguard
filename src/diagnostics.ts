@@ -28,7 +28,9 @@ export function applyFindings(
     (f) =>
       new vscode.Diagnostic(
         new vscode.Range(f.line - 1, 0, f.line - 1, Number.MAX_SAFE_INTEGER),
-        `[${f.category}] ${f.message}`,
+        f.suggestedFix
+          ? `[${f.category}] ${f.message} — Fix: ${f.suggestedFix}`
+          : `[${f.category}] ${f.message}`,
         severityToVscode(f.severity)
       )
   );

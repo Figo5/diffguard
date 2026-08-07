@@ -47,4 +47,36 @@ describe('parseFindings', () => {
   it('returns empty for an empty string', () => {
     expect(parseFindings('')).toEqual({ findings: [], dropped: 0 });
   });
+
+  it('parses a JSON array with trailing prose after it', () => {
+    const r = parseFindings(
+      '[{"category":"security","severity":"high","file":"a.ts","line":1,"message":"m"}] thanks!'
+    );
+    expect(r.findings).toHaveLength(1);
+    expect(r.dropped).toBe(0);
+  });
+
+  it('parses a JSON object with trailing prose after it', () => {
+    const r = parseFindings(
+      '{"findings":[{"category":"behavior","severity":"low","file":"b.ts","line":2,"message":"n"}]} let me know if you need anything else.'
+    );
+    expect(r.findings).toHaveLength(1);
+    expect(r.findings[0].category).toBe('behavior');
+  });
+
+  it('does not truncate early on a closing bracket inside a string value', () => {
+    const r = parseFindings(
+      '[{"category":"security","severity":"high","file":"a.ts","line":1,"message":"a[b]"}] trailing text'
+    );
+    expect(r.findings).toHaveLength(1);
+    expect(r.findings[0].message).toBe('a[b]');
+  });
+
+  it('parses nested arrays and objects fully despite trailing prose', () => {
+    const raw =
+      '{"findings":[{"category":"security","severity":"high","file":"a.ts","line":1,"message":"m","meta":{"tags":["x","y"],"nested":{"a":[1,2,3]}}}]} done.';
+    const r = parseFindings(raw);
+    expect(r.findings).toHaveLength(1);
+    expect(r.findings[0].file).toBe('a.ts');
+  });
 });
