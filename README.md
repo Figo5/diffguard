@@ -14,12 +14,19 @@ npm install -g @figo5/diffguard
 
 ## Setup
 
-```bash
-export ANTHROPIC_API_KEY=sk-ant-...
-```
+    diffguard config
 
-Get a key at https://console.anthropic.com/. Your key is used only for requests to
-Anthropic; DiffGuard never logs or stores it.
+`diffguard config` walks you through choosing a provider (Anthropic, OpenAI, OpenRouter,
+Groq, Ollama, or a custom OpenAI-compatible base URL), picking a model, and storing your
+API key in the platform keychain. Afterwards, plain `diffguard` just works — no env vars
+needed. Non-interactive setup is available too:
+
+    diffguard config --provider=ollama --model=gemma4:e2b
+    diffguard config --show    # print the effective config (never the key)
+    diffguard config --reset   # clear the saved config
+
+You can still configure everything with env vars instead — see the Configuration table.
+Env vars always override the saved config file.
 
 ## Usage
 
@@ -27,6 +34,7 @@ Anthropic; DiffGuard never logs or stores it.
 diffguard            # audit the working-tree diff
 diffguard --staged   # audit the staged diff (pre-commit)
 diffguard --json     # machine-readable output
+diffguard config    # one-time setup: provider, model, and key
 ```
 
 ### In coding agents
@@ -49,6 +57,10 @@ The agent calls the `diffguard_audit` tool with a `scope` argument:
 The tool returns a text report plus structured findings. The API key is resolved from the
 agent's own credential (Pi), `ANTHROPIC_API_KEY`, or the platform keychain
 (`diffguard key set`). The key never enters the agent's context.
+
+The agent layer reads the same saved config file as the CLI, so the provider and model you
+configure with `diffguard config` apply to Pi and MCP too. (Local providers like Ollama
+still need a key in the agent's environment — set `ANTHROPIC_API_KEY` to any value.)
 
 ### Exit codes
 
@@ -88,6 +100,11 @@ $ diffguard
 | `DIFFGUARD_MAX_DIFF_TOKENS` | `8000` | Max diff size before truncation (audit becomes partial) |
 | `DIFFGUARD_PROVIDER` | `anthropic` | Provider: `anthropic` or `openai` (OpenAI-compatible) |
 | `DIFFGUARD_BASE_URL` | *(unset)* | Base URL for OpenAI-compatible providers (e.g. `http://localhost:11434/v1`) |
+| `~/.config/diffguard/config.json` | *(unset)* | Saved settings from `diffguard config` (provider, model, base URL, `needsKey`). Env vars override it. Set `XDG_CONFIG_HOME` to relocate. |
+
+Precedence: **env var > config file > default**. The API key is never stored in the config
+file — it lives in the platform keychain (`diffguard key set` / `diffguard config`) or the
+`ANTHROPIC_API_KEY` env var. The CLI checks the env var first, then the keychain.
 
 ## How it works
 
