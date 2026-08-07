@@ -25,9 +25,9 @@ function requireBoolean(value: string | undefined, name: string): boolean {
 
 function requireNumber(value: string | undefined, name: string, fallback: number): number {
   if (value === undefined) return fallback;
-  const n = Number(value);
-  if (!Number.isFinite(n)) throw new Error(`Invalid maxDiffTokens: '${value}' (expected a number)`);
-  return n;
+  const raw = value.trim();
+  if (!/^\d+$/.test(raw)) throw new Error(`Invalid maxDiffTokens: '${value}' (expected a decimal number)`);
+  return Number(raw);
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv): DiffGuardSettings {

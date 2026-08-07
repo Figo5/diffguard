@@ -13,12 +13,13 @@
   },
   "files": ["dist", "bin"],
   "scripts": {
+    "clean": "rm -rf dist",
     "build": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "test": "vitest run",
     "cli": "node bin/diffguard",
     "start": "node dist/cli/main.js",
-    "prepack": "npm run build"
+    "prepack": "npm run clean && npm run build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1"

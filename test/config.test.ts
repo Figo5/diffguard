@@ -32,6 +32,12 @@ describe('loadConfig', () => {
   it('throws on a non-numeric maxDiffTokens', () => {
     expect(() => loadConfig({ DIFFGUARD_MAX_DIFF_TOKENS: 'lots' } as NodeJS.ProcessEnv)).toThrow(/maxDiffTokens/i);
   });
+  it('throws on an empty maxDiffTokens', () => {
+    expect(() => loadConfig({ DIFFGUARD_MAX_DIFF_TOKENS: '' } as NodeJS.ProcessEnv)).toThrow(/maxDiffTokens/i);
+  });
+  it('throws on a hex-formatted maxDiffTokens', () => {
+    expect(() => loadConfig({ DIFFGUARD_MAX_DIFF_TOKENS: '0x1F' } as NodeJS.ProcessEnv)).toThrow(/maxDiffTokens/i);
+  });
 });
 
 describe('getApiKey', () => {
