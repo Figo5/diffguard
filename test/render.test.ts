@@ -35,6 +35,12 @@ describe('renderHuman', () => {
     expect(out).toContain('2 dropped');
     expect(out).toContain('partial');
   });
+  it('surfaces dropped and truncated even when all findings are filtered out', () => {
+    const out = renderHuman(FINDINGS, { threshold: 'critical', dropped: 3, truncated: true, fileCount: 2 });
+    expect(out).toContain('No issues found in 2 files');
+    expect(out).toContain('3 dropped');
+    expect(out).toContain('partial');
+  });
 });
 
 describe('renderJson', () => {

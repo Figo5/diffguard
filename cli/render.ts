@@ -15,8 +15,17 @@ export function renderHuman(findings: Finding[], opts: HumanOptions): string {
     .filter((f) => SEVERITY_RANK[f.severity] <= SEVERITY_RANK[opts.threshold])
     .sort((a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]));
 
+  // Build metadata parts (dropped, truncated) that appear in all cases
+  const metadataParts: string[] = [];
+  if (opts.dropped > 0) metadataParts.push(`${opts.dropped} dropped`);
+  if (opts.truncated) metadataParts.push('partial audit (diff truncated)');
+
   if (shown.length === 0) {
-    return `No issues found in ${opts.fileCount} files.`;
+    const msg = `No issues found in ${opts.fileCount} files.`;
+    if (metadataParts.length === 0) {
+      return msg;
+    }
+    return `${msg} ${metadataParts.join(' · ')}`;
   }
 
   const blocks: string[] = [];
@@ -26,9 +35,7 @@ export function renderHuman(findings: Finding[], opts: HumanOptions): string {
   const categories = new Map<string, number>();
   for (const f of shown) categories.set(f.category, (categories.get(f.category) ?? 0) + 1);
   const summary = `${shown.length} finding${shown.length === 1 ? '' : 's'} (${[...categories.entries()].map(([c, n]) => `${n} ${c}`).join(', ')})`;
-  const parts = [summary];
-  if (opts.dropped > 0) parts.push(`${opts.dropped} dropped`);
-  if (opts.truncated) parts.push('partial audit (diff truncated)');
+  const parts = [summary, ...metadataParts];
   return `${blocks.join('\n\n')}\n\n${parts.join(' · ')}`;
 }
 
