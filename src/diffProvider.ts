@@ -12,8 +12,10 @@ export async function isGitRepo(cwd: string): Promise<boolean> {
   }
 }
 
-export async function getGitDiff(cwd: string): Promise<string> {
-  const { stdout } = await execFileAsync('git', ['diff', '--no-color'], { cwd, maxBuffer: 10 * 1024 * 1024 });
+export async function getGitDiff(cwd: string, opts: { staged?: boolean } = {}): Promise<string> {
+  const args = ['diff', '--no-color'];
+  if (opts.staged) args.push('--cached');
+  const { stdout } = await execFileAsync('git', args, { cwd, maxBuffer: 10 * 1024 * 1024 });
   return stdout;
 }
 

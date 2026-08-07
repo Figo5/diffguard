@@ -44,6 +44,17 @@ describe('getGitDiff', () => {
   });
 });
 
+describe('getGitDiff staged', () => {
+  it('returns the staged diff with staged:true and the working-tree diff by default', async () => {
+    writeFileSync(join(dir, 'a.ts'), 'const x = 3;\n');
+    expect(await getGitDiff(dir)).toContain('+const x = 3;');
+    expect(await getGitDiff(dir, { staged: true })).toBe('');
+    execFileSync('git', ['add', 'a.ts'], { cwd: dir });
+    expect(await getGitDiff(dir, { staged: true })).toContain('+const x = 3;');
+    expect(await getGitDiff(dir)).toBe('');
+  });
+});
+
 describe('getSelectionText', () => {
   it('returns the selected text from the editor', () => {
     const editor = { document: { getText: (r: unknown) => (r === 'sel' ? 'selected code' : '') }, selection: 'sel' };
