@@ -1,7 +1,13 @@
 // test/pi.test.ts
 import { describe, it, expect, vi } from 'vitest';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { registerPiExtension } from '../agent/pi.js';
 import { TOOL_NAME } from '../agent/core.js';
+
+// Never read the developer's real ~/.config/diffguard/config.json during tests.
+process.env.XDG_CONFIG_HOME = mkdtempSync(join(tmpdir(), 'diffguard-pi-test-'));
 
 function fakeApi() {
   const registerTool = vi.fn();

@@ -1,7 +1,13 @@
 // test/mcp.test.ts
 import { describe, it, expect, vi } from 'vitest';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { buildToolHandler } from '../agent/mcp.js';
 import type { RunAuditResult } from '../agent/core.js';
+
+// Never read the developer's real ~/.config/diffguard/config.json during tests.
+process.env.XDG_CONFIG_HOME = mkdtempSync(join(tmpdir(), 'diffguard-mcp-test-'));
 
 describe('buildToolHandler', () => {
   it('returns text and structured content for a clean audit', async () => {

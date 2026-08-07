@@ -4,6 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { runAudit, TOOL_NAME, TOOL_DESCRIPTION, TOOL_PARAMS, parseScope } from './core.js';
 import type { RunAuditResult } from './core.js';
+import { loadSettingsFromEnv } from '../src/config/loadSettings.js';
 
 export function buildToolHandler(
   audit: (input: { cwd: string; scope: string | undefined; env: NodeJS.ProcessEnv; settings: Parameters<typeof runAudit>[0]['settings']; signal?: AbortSignal }) => Promise<RunAuditResult>
@@ -22,25 +23,13 @@ export function buildToolHandler(
       cwd: process.cwd(),
       scope: args.scope,
       env: process.env,
-      settings: loadSettingsFromEnv(process.env),
+      settings: await loadSettingsFromEnv(process.env),
     });
     return {
       content: [{ type: 'text', text: result.error ? result.error : result.text }],
       structuredContent: { findings: result.findings, error: result.error },
       ...(result.error ? { isError: true } : {}),
     };
-  };
-}
-
-function loadSettingsFromEnv(env: NodeJS.ProcessEnv) {
-  return {
-    model: env.DIFFGUARD_MODEL ?? 'claude-sonnet-5',
-    severityThreshold: 'medium' as const,
-    securityEnabled: true,
-    behaviorEnabled: true,
-    maxDiffTokens: Number(env.DIFFGUARD_MAX_DIFF_TOKENS ?? 8000),
-    provider: (env.DIFFGUARD_PROVIDER === 'openai' ? 'openai' : 'anthropic') as 'anthropic' | 'openai',
-    baseUrl: env.DIFFGUARD_BASE_URL?.trim() || undefined,
   };
 }
 

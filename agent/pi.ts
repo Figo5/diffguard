@@ -1,6 +1,7 @@
 // agent/pi.ts
 import { runAudit, TOOL_NAME, TOOL_DESCRIPTION, TOOL_PARAMS } from './core.js';
 import type { RunAuditResult } from './core.js';
+import { loadSettingsFromEnv } from '../src/config/loadSettings.js';
 
 export interface PiExtensionApi {
   registerTool(tool: {
@@ -29,21 +30,9 @@ export function registerPiExtension(
         scope: args.scope,
         env: process.env,
         agentAuth,
-        settings: loadSettingsFromEnv(process.env),
+        settings: await loadSettingsFromEnv(process.env),
         signal: ctx.signal,
       });
     },
   });
-}
-
-function loadSettingsFromEnv(env: NodeJS.ProcessEnv) {
-  return {
-    model: env.DIFFGUARD_MODEL ?? 'claude-sonnet-5',
-    severityThreshold: 'medium' as const,
-    securityEnabled: true,
-    behaviorEnabled: true,
-    maxDiffTokens: Number(env.DIFFGUARD_MAX_DIFF_TOKENS ?? 8000),
-    provider: (env.DIFFGUARD_PROVIDER === 'openai' ? 'openai' : 'anthropic') as 'anthropic' | 'openai',
-    baseUrl: env.DIFFGUARD_BASE_URL?.trim() || undefined,
-  };
 }
