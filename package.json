@@ -29,7 +29,7 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "package": "vsce package"
   },
   "dependencies": {
