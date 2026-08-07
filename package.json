@@ -1,6 +1,6 @@
 {
   "name": "@figo5/diffguard",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Audit code changes for security issues and unintended behavior changes using your own Anthropic API key.",
   "license": "MIT",
   "repository": {
