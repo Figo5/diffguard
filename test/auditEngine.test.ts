@@ -73,3 +73,39 @@ describe('AuditEngine', () => {
     expect(prompt).not.toContain('security');
   });
 });
+
+describe('AuditEngine.auditRepo', () => {
+  it('returns security-only findings from the LLM response', async () => {
+    const llm = fakeLlm('[{"category":"security","severity":"high","file":"a.ts","line":1,"message":"m"}]');
+    const engine = new AuditEngine({ llm, getSettings: () => SETTINGS });
+    const r = await engine.auditRepo({ files: '=== a.ts ===\nconst x = 1;\n', truncated: false });
+    expect(r.error).toBeNull();
+    expect(r.findings).toHaveLength(1);
+    expect(r.findings[0].category).toBe('security');
+    const prompt = (llm.streamText as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(prompt).toContain('Audit for: security.');
+    expect(prompt).not.toContain('behavior');
+  });
+
+  it('reports cancelled when aborted', async () => {
+    const llm: LlmClient = {
+      streamText: vi.fn(async (_p, opts) => {
+        opts?.signal?.throwIfAborted();
+        throw new Error('aborted');
+      }),
+    };
+    const engine = new AuditEngine({ llm, getSettings: () => SETTINGS });
+    const controller = new AbortController();
+    controller.abort();
+    const r = await engine.auditRepo({ files: '=== a.ts ===\nconst x = 1;\n', truncated: false }, controller.signal);
+    expect(r.error).toBe('cancelled');
+  });
+
+  it('returns clean for an empty file set', async () => {
+    const llm = fakeLlm('[]');
+    const engine = new AuditEngine({ llm, getSettings: () => SETTINGS });
+    const r = await engine.auditRepo({ files: '', truncated: false });
+    expect(r.error).toBe('empty');
+    expect(llm.streamText).not.toHaveBeenCalled();
+  });
+});

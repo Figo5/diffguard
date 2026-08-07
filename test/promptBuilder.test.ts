@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildPrompt, truncateDiff } from '../src/auditEngine/promptBuilder.js';
+import { buildPrompt, buildRepoAuditPrompt, truncateDiff } from '../src/auditEngine/promptBuilder.js';
 
 const DIFF = 'diff --git a/src/auth.ts b/src/auth.ts\n@@ -40,3 +40,3 @@\n-  const q = "SELECT * FROM u WHERE id=" + id;\n+  const q = "SELECT * FROM u WHERE id=?";\n';
 
@@ -47,5 +47,20 @@ describe('buildPrompt', () => {
   it('demands JSON-only output', () => {
     const prompt = buildPrompt({ diff: DIFF, repoContext: '', categories: ['security'], truncated: false });
     expect(prompt).toContain('Return JSON only');
+  });
+});
+
+describe('buildRepoAuditPrompt', () => {
+  it('instructs a security-only audit of the given files', () => {
+    const prompt = buildRepoAuditPrompt({ files: '=== a.ts ===\nconst x = 1;\n', truncated: false });
+    expect(prompt).toContain('=== a.ts ===');
+    expect(prompt).toContain('Audit for: security.');
+    expect(prompt).not.toContain('behavior');
+    expect(prompt).toContain('Return JSON only');
+  });
+
+  it('warns about truncation when flagged', () => {
+    const prompt = buildRepoAuditPrompt({ files: '=== a.ts ===\nconst x = 1;\n', truncated: true });
+    expect(prompt).toContain('WARNING: the repository was truncated');
   });
 });

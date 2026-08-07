@@ -52,3 +52,33 @@ export function buildPrompt(input: PromptInput): string {
     `{"category":${categoryOptions},"severity":"critical"|"high"|"medium"|"low"|"info","file":"<path from diff>","line":<1-based line number>,"message":"<what and why>","suggestedFix":"<optional>"}`,
   ].join('\n');
 }
+
+export interface RepoPromptInput {
+  files: string;
+  truncated: boolean;
+}
+
+export function buildRepoAuditPrompt(input: RepoPromptInput): string {
+  return [
+    'You are DiffGuard, a code auditor. You review a repository and report security issues found.',
+    '',
+    'Rules:',
+    '- Only report findings you can point to a specific file and line in the repository.',
+    '- Never invent files or lines not present in the repository.',
+    '- Prefer fewer, high-confidence findings over a long list of guesses.',
+    '- Return JSON only, no prose, no markdown fences.',
+    '',
+    'Audit for: security.',
+    '',
+    ...(input.truncated
+      ? ['WARNING: the repository was truncated. Audit only the portion shown.', '']
+      : []),
+    'Repository files:',
+    '```',
+    input.files,
+    '```',
+    '',
+    'Respond with a JSON array of findings. Each finding:',
+    '{"category":"security","severity":"critical"|"high"|"medium"|"low"|"info","file":"<path from repository>","line":<1-based line number>,"message":"<what and why>","suggestedFix":"<optional>"}',
+  ].join('\n');
+}
