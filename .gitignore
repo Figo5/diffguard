@@ -3,3 +3,9 @@ out/
 *.vsix
 .vscode-test/
 dist/
+
+# Local provider configuration and secrets
+.env
+.env.*
+!.env.example
+*.log

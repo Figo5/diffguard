@@ -1,10 +1,26 @@
 # DiffGuard
 
-Audit code changes for **security issues** and **unintended behavior changes** using your
-own Anthropic API key. DiffGuard reads a git diff, sends it to Claude for review, and
-prints structured findings — or exits cleanly when nothing's wrong. Built for the
-terminal: works on any machine with `git` and Node, drops straight into CI and
-pre-commit hooks.
+Review git diffs for **security issues** and **unintended behavior changes** with
+Anthropic, OpenAI-compatible APIs or a local provider such as Ollama. DiffGuard
+returns structured findings in the terminal or JSON for automation.
+
+[![npm](https://img.shields.io/npm/v/@figo5/diffguard)](https://www.npmjs.com/package/@figo5/diffguard)
+
+```sh
+diffguard config     # choose provider/model; store a key if needed
+diffguard --staged   # review the staged diff
+diffguard --json     # structured findings
+```
+
+An illustrative finding (not a captured audit):
+
+```text
+[security] high  src/query.ts:42
+  User input is interpolated into a SQL query.
+  Fix: use parameterized queries.
+
+1 finding (1 security, 0 behavior)
+```
 
 ## Install
 
@@ -82,17 +98,6 @@ Use it as a pre-commit gate:
 diffguard --staged || exit 1
 ```
 
-### Example
-
-```
-$ diffguard
-[security] high  src/auth.ts:42
-  Credentials compared with == instead of a constant-time comparison.
-  Fix: use crypto.timingSafeEqual.
-
-2 findings (1 security, 1 behavior)
-```
-
 ### Configuration
 
 | Env var | Default | Meaning |
@@ -114,7 +119,7 @@ file — it lives in the platform keychain (`diffguard key set` / `diffguard con
 ## How it works
 
 1. DiffGuard collects the git diff and some lightweight repo context.
-2. It builds a prompt instructing Claude to return findings as strict JSON, and streams
+2. It builds a prompt instructing the configured model to return findings as strict JSON, and streams
    the response (cancel with `Ctrl-C`).
 3. The response is parsed and validated — malformed findings are dropped and counted,
    never silently accepted.
@@ -125,15 +130,33 @@ large, it's truncated to `DIFFGUARD_MAX_DIFF_TOKENS` and the audit is marked par
 
 ## Privacy
 
-- The diff you audit is sent to Anthropic to generate findings. Don't audit code you
-  aren't comfortable sending to a third-party API.
+- The diff and review context are sent to the configured provider endpoint. With
+  a remote provider, that is external processing; with a local Ollama endpoint,
+  inference stays on that local service. Review your chosen provider before sending
+  private code.
 - DiffGuard makes no other network calls and collects no telemetry.
 
-## Roadmap
+## Development and status
 
-- Pre-commit hook installer (`diffguard install`).
-- `--path` filtering, `--fail-on <severity>`.
-- Test-gap and license-compliance checks alongside security/behavior findings.
+The published npm package is `@figo5/diffguard`; version **0.1.3** was verified
+against the npm registry on 2026-09-22. The package installs built JavaScript.
+To work from source:
+
+```sh
+npm ci
+npm run build
+node bin/diffguard --help
+npm test
+```
+
+TypeScript separates diff collection, provider calls, response validation and
+CLI/agent integration. Model findings are advisory and can miss issues or produce
+false positives; an empty report is not a security guarantee. Oversized inputs
+are truncated and marked partial.
+
+There is no GitHub Actions workflow currently configured. The build and CLI
+`--help`/`--version` checks pass. A known source-test issue is recorded in
+[development notes](docs/development.md); no passing-CI claim is made.
 
 ## License
 
