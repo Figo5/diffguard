@@ -62,7 +62,7 @@ diffguard config    # one-time setup: provider, model, and key
 
 DiffGuard is available as an on-demand audit tool inside coding agents:
 
-- **Pi** — install the extension at `~/.pi/agent/extensions/pi.ts` (or `.pi/extensions/pi.ts`).
+- **Pi** — copy `agent/pi.ts` from this repo into your Pi extensions directory (`~/.pi/agent/extensions/` or `.pi/extensions/`).
 - **MCP-capable agents** (Claude Code, Codex, Cursor, Windsurf, Copilot, Cline) — run the
   `diffguard-mcp` stdio server and add it as an MCP server.
 
@@ -155,8 +155,8 @@ false positives; an empty report is not a security guarantee. Oversized inputs
 are truncated and marked partial.
 
 There is no GitHub Actions workflow currently configured. The build and CLI
-`--help`/`--version` checks pass. A known source-test issue is recorded in
-[development notes](docs/development.md); no passing-CI claim is made.
+`--help`/`--version` checks pass. A known source-test issue remains;
+no passing-CI claim is made.
 
 ## License
 
