@@ -13,7 +13,7 @@ beforeAll(() => {
   execFileSync('git', ['init', '-q'], { cwd: dir });
   writeFileSync(join(dir, 'a.ts'), 'const x = 1;\n');
   execFileSync('git', ['add', '.'], { cwd: dir });
-  execFileSync('git', ['commit', '-q', '-m', 'init'], { cwd: dir });
+  execFileSync('git', ['-c', 'user.name=DiffGuard Tests', '-c', 'user.email=tests@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '-m', 'init'], { cwd: dir });
 });
 
 afterAll(() => {
@@ -90,7 +90,7 @@ describe('getRepoFiles', () => {
     writeFileSync(join(repo, 'node_modules', 'dep.js'), 'module.exports = 1;\n');
     writeFileSync(join(repo, 'blob.bin'), Buffer.from([0, 1, 2, 0, 3]));
     execFileSync('git', ['add', '.'], { cwd: repo });
-    execFileSync('git', ['commit', '-q', '-m', 'init'], { cwd: repo });
+    execFileSync('git', ['-c', 'user.name=DiffGuard Tests', '-c', 'user.email=tests@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '-m', 'init'], { cwd: repo });
     writeFileSync(join(repo, 'untracked.ts'), 'const u = 1;\n');
   });
   afterAll(() => {
