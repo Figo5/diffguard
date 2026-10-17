@@ -12,15 +12,19 @@ diffguard --staged   # review the staged diff
 diffguard --json     # structured findings
 ```
 
-An illustrative finding (not a captured audit):
+Captured CLI output from the [reproducible fixture walkthrough](docs/try-it.md):
 
 ```text
-[security] high  src/query.ts:42
+[security] high  query.js:2
   User input is interpolated into a SQL query.
-  Fix: use parameterized queries.
+  Fix: Use a parameterized query with a separate values array.
 
-1 finding (1 security, 0 behavior)
+1 finding (1 security)
 ```
+
+The local fixture returns a prewritten finding through the real CLI/provider
+path. It makes no model call and establishes no detection accuracy.
+[Try the fixture or review a scratch diff with your chosen model](docs/try-it.md).
 
 ## Install
 
@@ -154,9 +158,10 @@ CLI/agent integration. Model findings are advisory and can miss issues or produc
 false positives; an empty report is not a security guarantee. Oversized inputs
 are truncated and marked partial.
 
-There is no GitHub Actions workflow currently configured. The build and CLI
-`--help`/`--version` checks pass. A known source-test issue remains;
-no passing-CI claim is made.
+GitHub Actions runs the build, source tests, CLI version check, and local
+fixture walkthrough on Node.js 24. The source and built CLI resolve their
+package version from their respective directory layouts. The fixture exercises
+the request/rendering path and does not evaluate a model's findings.
 
 ## License
 

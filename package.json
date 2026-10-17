@@ -29,7 +29,8 @@
     "test": "vitest run",
     "cli": "node bin/diffguard",
     "start": "node dist/cli/main.js",
-    "prepack": "npm run clean && npm run build"
+    "prepack": "npm run clean && npm run build",
+    "demo": "node examples/review-demo.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

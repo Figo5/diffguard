@@ -5,9 +5,20 @@ import type { CliOptions } from './config.js';
 import { handleKeyCommand } from './key.js';
 import { handleConfigCommand } from './configCmd.js';
 
-export const VERSION = JSON.parse(
-  readFileSync(fileURLToPath(new URL('../../package.json', import.meta.url)), 'utf8')
-).version as string;
+function packageVersion(): string {
+  // Source lives in cli/; compiled code lives in dist/cli/.
+  for (const relative of ['../package.json', '../../package.json']) {
+    try {
+      const pkg = JSON.parse(readFileSync(fileURLToPath(new URL(relative, import.meta.url)), 'utf8'));
+      if (pkg.name === '@figo5/diffguard' && typeof pkg.version === 'string') return pkg.version;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    }
+  }
+  throw new Error('Could not locate the DiffGuard package version.');
+}
+
+export const VERSION = packageVersion();
 
 export function parseArgs(argv: string[]): CliOptions {
   const opts: CliOptions = { staged: false, json: false };

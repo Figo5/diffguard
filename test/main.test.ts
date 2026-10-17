@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { parseArgs } from '../cli/main.js';
+import { parseArgs, VERSION } from '../cli/main.js';
+import { readFileSync } from 'node:fs';
+
+it('resolves the version from the source package', () => {
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  expect(VERSION).toBe(pkg.version);
+});
 
 describe('parseArgs', () => {
   it('defaults to working-tree diff, human output', () => {
